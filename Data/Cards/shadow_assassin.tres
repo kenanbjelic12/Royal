@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/MonsterData.gd" id="1_data"]
+[ext_resource type="Script" path="res://Scripts/Models/ShadowAssassinModel.gd" id="2_model"]
+
+[resource]
+script = ExtResource("1_data")
+id = &"shadow_assassin"
+display_name = "Shadow Assassin"
+role = "Fast Attacker"
+description = "Lightning fast and hard to catch. Her ambush strike deals double damage."
+rarity = 2
+elixir_cost = 3
+accent_color = Color(0.55, 0.35, 1, 1)
+max_hp = 560.0
+damage = 150.0
+attack_speed = 0.75
+attack_range = 0.6
+sight_range = 6.0
+move_speed = 2.8
+target_type = 0
+can_hit_air = false
+is_flying = false
+splash_radius = 0
+projectile = 0
+projectile_speed = 9
+slow_amount = 0
+slow_duration = 0
+poison_dps = 0
+poison_duration = 0
+first_hit_multiplier = 2.2
+radius = 0.38
+mass = 1.0
+model_scale = 1.0
+model_script = ExtResource("2_model")
+sfx_attack = &"dagger"

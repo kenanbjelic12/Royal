@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/MonsterData.gd" id="1_data"]
+[ext_resource type="Script" path="res://Scripts/Models/FireKnightModel.gd" id="2_model"]
+
+[resource]
+script = ExtResource("1_data")
+id = &"fire_knight"
+display_name = "Fire Knight"
+role = "Warrior / Tank"
+description = "A small but fearless knight. His blazing greatsword cleaves through every foe in front of him."
+rarity = 1
+elixir_cost = 5
+accent_color = Color(1, 0.45, 0.15, 1)
+max_hp = 1900.0
+damage = 230.0
+attack_speed = 1.4
+attack_range = 0.75
+sight_range = 5.5
+move_speed = 1.5
+target_type = 0
+can_hit_air = false
+is_flying = false
+splash_radius = 0.9
+projectile = 0
+projectile_speed = 9
+slow_amount = 0
+slow_duration = 0
+poison_dps = 0
+poison_duration = 0
+first_hit_multiplier = 1.0
+radius = 0.5
+mass = 3.0
+model_scale = 1.0
+model_script = ExtResource("2_model")
+sfx_attack = &"fire_slash"

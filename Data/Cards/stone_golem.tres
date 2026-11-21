@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/MonsterData.gd" id="1_data"]
+[ext_resource type="Script" path="res://Scripts/Models/StoneGolemModel.gd" id="2_model"]
+
+[resource]
+script = ExtResource("1_data")
+id = &"stone_golem"
+display_name = "Stone Golem"
+role = "Building Tank"
+description = "A huge, clumsy and lovable rock giant. Ignores troops and marches straight for towers."
+rarity = 2
+elixir_cost = 6
+accent_color = Color(0.6, 0.55, 0.45, 1)
+max_hp = 4300.0
+damage = 300.0
+attack_speed = 2.2
+attack_range = 0.75
+sight_range = 7.0
+move_speed = 0.9
+target_type = 1
+can_hit_air = false
+is_flying = false
+splash_radius = 0
+projectile = 0
+projectile_speed = 9
+slow_amount = 0
+slow_duration = 0
+poison_dps = 0
+poison_duration = 0
+first_hit_multiplier = 1.0
+radius = 0.85
+mass = 10.0
+model_scale = 1.0
+model_script = ExtResource("2_model")
+sfx_attack = &"rock_slam"
