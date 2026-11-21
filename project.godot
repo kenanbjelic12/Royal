@@ -8,6 +8,12 @@ config/description="3D card battle game - test build with 5 cards / 5 monsters"
 run/main_scene="res://Scenes/MainMenu/MainMenu.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
 config/icon="res://icon.svg"
+config/quit_on_go_back=false
+boot_splash/bg_color=Color(0.0549, 0.0784, 0.1882, 1)
+boot_splash/show_image=true
+boot_splash/image="res://Assets/UI/boot_splash.png"
+boot_splash/fullsize=true
+boot_splash/use_filter=true
 
 [autoload]
 

@@ -26,9 +26,11 @@ var _drag_index := -1
 var _dragging := false
 var _press_pos := Vector2.ZERO
 var _was_selected := false
+var _pause_layer: Control
 
 func _ready() -> void:
 	layer = 5
+	process_mode = Node.PROCESS_MODE_ALWAYS   # pause menu keeps working while the battle is paused
 	root = Control.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -116,6 +118,12 @@ func _build_top_bar() -> void:
 	tbox.add_child(tv)
 	tbox.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	h.add_child(tbox)
+	# pause button (also Esc on PC and the Back button on Android)
+	var pause := UIStyle.button("II", UIStyle.BLUE, 26, Vector2(58, 52))
+	pause.name = "PauseButton"
+	pause.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	pause.pressed.connect(open_pause)
+	h.add_child(pause)
 
 func _build_bottom() -> void:
 	_bottom = Control.new()
@@ -255,6 +263,72 @@ func _layout() -> void:
 	_elixir_fill.queue_redraw()
 
 # ------------------------------------------------------------------ updates
+# ------------------------------------------------------------------ pause
+func open_pause() -> void:
+	if _pause_layer != null or battle.is_finished():
+		return
+	battle.card_manager.deselect()
+	get_tree().paused = true
+	_pause_layer = Control.new()
+	_pause_layer.name = "PauseMenu"
+	_pause_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	_pause_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_pause_layer.mouse_filter = Control.MOUSE_FILTER_STOP
+	root.add_child(_pause_layer)
+	var dim := ColorRect.new()
+	dim.color = Color(0.02, 0.03, 0.1, 0.7)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_pause_layer.add_child(dim)
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_pause_layer.add_child(center)
+	var panel := UIStyle.make_panel(UIStyle.PANEL, 26, UIStyle.NAVY, 5)
+	center.add_child(panel)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 18)
+	panel.add_child(v)
+	v.add_child(UIStyle.label("Paused", 52, UIStyle.GOLD, 10))
+	v.add_child(UIStyle.label("Time left %s  ·  Crowns %d - %d" % [UIStyle.fmt_time(battle.time_left), battle.crowns[0], battle.crowns[1]], 20, Color("#c9d4ff"), 4))
+	var resume := UIStyle.button("Resume", UIStyle.GREEN, 32, Vector2(320, 86))
+	resume.name = "Resume"
+	resume.pressed.connect(close_pause)
+	v.add_child(resume)
+	var quit := UIStyle.button("Exit to Menu", UIStyle.RED, 30, Vector2(320, 86))
+	quit.name = "ExitToMenu"
+	quit.pressed.connect(exit_to_menu)
+	v.add_child(quit)
+	v.add_child(UIStyle.label("Leaving ends the battle without rewards.", 16, Color("#c9d4ff"), 3))
+	panel.pivot_offset = panel.size * 0.5
+	panel.scale = Vector2(0.85, 0.85)
+	var tw := panel.create_tween()
+	tw.tween_property(panel, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+func close_pause() -> void:
+	if _pause_layer:
+		_pause_layer.queue_free()
+		_pause_layer = null
+	get_tree().paused = false
+
+func exit_to_menu() -> void:
+	get_tree().paused = false
+	AudioManager.stop_music()
+	GameManager.goto_menu()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		if _pause_layer:
+			close_pause()
+		else:
+			open_pause()
+		get_viewport().set_input_as_handled()
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_GO_BACK_REQUEST:   # Android back button
+		if _pause_layer:
+			close_pause()
+		else:
+			open_pause()
+
 func _process(_delta: float) -> void:
 	if battle == null:
 		return

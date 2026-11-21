@@ -1,0 +1,131 @@
+<title>Royal Arena</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap">
+<style>
+/* One-screen game frame with a branded loader; a single dark look on purpose. */
+:root {
+	--bg: #0e1430; --ink: #f3f6ff; --muted: #c9d4ff; --gold: #ffcb2e; --gold-deep: #5a2a00;
+	--bar-bg: rgba(8, 12, 32, 0.78); --elixir: #d633e8; --elixir-hi: #f07dff;
+	--display: "Lilita One", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+	color-scheme: dark;
+}
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--ink); overflow: hidden; touch-action: none; }
+#canvas { display: block; position: fixed; inset: 0; width: 100%; height: 100%; border: 0; }
+#canvas:focus { outline: none; }
+#loader {
+	position: fixed; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center;
+	justify-content: space-between; padding: calc(env(safe-area-inset-top, 0px) + 6vh) 0 calc(env(safe-area-inset-bottom, 0px) + 5vh);
+	padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+	background: var(--bg) url("loading_bg.jpg") center / cover no-repeat;
+	font-family: var(--display); transition: opacity 0.6s ease;
+}
+#loader.done { opacity: 0; pointer-events: none; }
+.brand { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; }
+.crown { width: clamp(56px, 14vw, 96px); filter: drop-shadow(0 4px 0 var(--gold-deep)); }
+.logo {
+	margin: 0; font-size: clamp(2.6rem, 12vw, 5.4rem); letter-spacing: 0.02em; color: var(--gold); text-align: center;
+	-webkit-text-stroke: 0.09em var(--gold-deep); paint-order: stroke fill; text-shadow: 0 0.09em 0 var(--gold-deep);
+	text-wrap: balance;
+}
+.foot { width: min(520px, 100%); display: flex; flex-direction: column; gap: 0.7rem; align-items: stretch; }
+.tip { margin: 0; text-align: center; font-size: clamp(0.95rem, 3.6vw, 1.15rem); color: var(--ink);
+	-webkit-text-stroke: 0.18em #0e1428; paint-order: stroke fill; min-height: 2.6em; }
+.track { position: relative; height: 30px; border-radius: 16px; background: var(--bar-bg); border: 3px solid #0e1428; overflow: hidden; }
+.fill { position: absolute; inset: 0 auto 0 0; width: 0%; border-radius: 12px;
+	background: linear-gradient(180deg, var(--elixir-hi), var(--elixir) 55%); transition: width 0.25s ease; }
+.pct { position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.05rem; font-variant-numeric: tabular-nums;
+	color: var(--ink); -webkit-text-stroke: 0.16em #0e1428; paint-order: stroke fill; }
+.status { margin: 0; text-align: center; font-size: 0.95rem; color: var(--muted); -webkit-text-stroke: 0.15em #0e1428; paint-order: stroke fill; }
+.status.error { color: #ffb0b0; }
+@media (prefers-reduced-motion: reduce) { #loader, .fill { transition: none; } }
+</style>
+<canvas id="canvas">Royal Arena needs a browser with canvas support.</canvas>
+<div id="loader" role="status" aria-live="polite">
+	<div class="brand">
+		<svg class="crown" viewBox="0 0 128 84" aria-hidden="true"><path d="M8 72 L18 14 L42 42 L64 4 L86 42 L110 14 L120 72 Z" fill="#ffcb2e" stroke="#5a2a00" stroke-width="7" stroke-linejoin="round"/><circle cx="64" cy="52" r="8" fill="#e8344a"/></svg>
+		<h1 class="logo">ROYAL ARENA</h1>
+	</div>
+	<div class="foot">
+		<p class="tip" id="tip">Drag a card onto your half of the arena to summon a monster.</p>
+		<div class="track"><div class="fill" id="fill"></div><div class="pct" id="pct">0%</div></div>
+		<p class="status" id="status">Loading the arena...</p>
+	</div>
+</div>
+<script>
+// Large files ship as gzip chunks (hosting limit per file). They are fetched with
+// progress, joined and decompressed here before the Godot engine receives them.
+(function () {
+	const CHUNKS = {{CHUNKS}};
+	const SIZES = {{SIZES}};
+	const TYPES = {"index.wasm": "application/wasm", "index.pck": "application/octet-stream"};
+	const total = Object.values(SIZES).reduce((a, b) => a + b, 0);
+	let loaded = 0;
+	const fill = document.getElementById("fill"), pct = document.getElementById("pct");
+	function progress(n) {
+		loaded += n;
+		const p = Math.min(99, Math.floor(loaded * 100 / total));
+		fill.style.width = p + "%";
+		pct.textContent = p + "%";
+	}
+	async function readChunk(url) {
+		const r = await origFetch(new URL(url, document.baseURI));
+		if (!r.ok) throw new Error("Could not download " + url + " (HTTP " + r.status + ")");
+		const reader = r.body.getReader();
+		const parts = [];
+		for (;;) {
+			const { done, value } = await reader.read();
+			if (done) break;
+			parts.push(value);
+			progress(value.byteLength);
+		}
+		return new Blob(parts);
+	}
+	const origFetch = window.fetch.bind(window);
+	window.fetch = async function (input, init) {
+		const url = (typeof input === "string") ? input : (input && input.url) || "";
+		const name = url.split("?")[0].split("/").pop();
+		if (!CHUNKS[name]) return origFetch(input, init);
+		const blobs = await Promise.all(CHUNKS[name].map(readChunk));
+		const stream = new Blob(blobs).stream().pipeThrough(new DecompressionStream("gzip"));
+		const data = await new Response(stream).arrayBuffer();
+		return new Response(data, { status: 200, headers: { "Content-Type": TYPES[name], "Content-Length": String(data.byteLength) } });
+	};
+	const tips = [
+		"Drag a card onto your half of the arena to summon a monster.",
+		"The Stone Golem ignores troops and marches straight for towers.",
+		"Frost Dragon flies over the river and slows what it hits.",
+		"Poison keeps hurting after the Poison Witch's orb lands.",
+		"Destroy a Princess Tower to unlock deploying in that lane.",
+		"Elixir refills twice as fast in the last minute.",
+	];
+	let ti = 0;
+	const tipEl = document.getElementById("tip");
+	window.__tipTimer = setInterval(() => { ti = (ti + 1) % tips.length; tipEl.textContent = tips[ti]; }, 3500);
+})();
+</script>
+<script src="index.js"></script>
+<script>
+const GODOT_CONFIG = {{GODOT_CONFIG}};
+const engine = new Engine(GODOT_CONFIG);
+(function () {
+	const loader = document.getElementById("loader");
+	const status = document.getElementById("status");
+	function fail(msg) {
+		status.textContent = msg;
+		status.classList.add("error");
+	}
+	const missing = Engine.getMissingFeatures({ threads: false });
+	if (missing.length) {
+		fail("This browser is missing: " + missing.join(", ") + ". Try the latest Chrome, Edge, Firefox or Safari.");
+		return;
+	}
+	engine.startGame({}).then(() => {
+		document.getElementById("fill").style.width = "100%";
+		document.getElementById("pct").textContent = "100%";
+		clearInterval(window.__tipTimer);
+		setTimeout(() => loader.classList.add("done"), 250);
+		setTimeout(() => loader.remove(), 1000);
+	}, (err) => fail("The game could not start: " + (err && err.message ? err.message : err)));
+})();
+</script>

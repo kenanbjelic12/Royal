@@ -317,6 +317,18 @@ func test_win_lose() -> void:
 # 10 --------------------------------------------------------------------------
 func test_menus() -> void:
 	current = "10. Menus"
+	# pause menu in battle
+	await new_battle(false, false, true)
+	var hud: UIManager = battle.hud
+	check("battle has a pause button", hud.root.find_child("PauseButton", true, false) != null)
+	hud.open_pause()
+	var t0 := battle.time_left
+	await get_tree().create_timer(1.0, true, false, true).timeout
+	check("pause freezes the battle clock", get_tree().paused and is_equal_approx(battle.time_left, t0))
+	check("pause menu offers Resume and Exit to Menu", hud.root.find_child("Resume", true, false) != null and hud.root.find_child("ExitToMenu", true, false) != null)
+	hud.close_pause()
+	await sim(0.5)
+	check("resume continues the battle", not get_tree().paused and battle.time_left < t0)
 	if battle:
 		battle.queue_free()
 		battle = null
