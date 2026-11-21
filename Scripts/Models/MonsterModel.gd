@@ -27,6 +27,7 @@ var t := 0.0
 var moving := false
 var move_blend := 0.0
 var move_speed_factor := 1.0   # animation speed multiplier (slows show too)
+var walk_rate := 1.0           # gait speed so feet match the movement speed
 
 var attack_t := -1.0
 var attack_len := 0.8

@@ -215,7 +215,7 @@ func pose(dt: float) -> void:
 		return
 	if moving and not bool(_setup.get("fly", false)):
 		var clip := "run" if bool(_setup.get("run", false)) else "walk"
-		_play(clip, move_speed_factor)
+		_play(clip, move_speed_factor * clampf(walk_rate, 0.6, 2.0))
 	else:
 		_play("idle")
 	if parts.has("orb_core"):

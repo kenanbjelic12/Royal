@@ -19,6 +19,7 @@ var deployed_at_msec := 0
 var _attack_target: Combatant
 var _ring: MeshInstance3D
 var _status_fx: CPUParticles3D
+var _frost: Node3D
 
 ## Must be called before adding to the tree.
 func setup(p_data: MonsterData, p_team: int, p_level: int, p_battle: Node) -> void:
@@ -44,6 +45,7 @@ func _ready() -> void:
 	model.position.y = ArenaLayout.FLY_HEIGHT if is_flying else 0.0
 	model.rotation.y = facing
 	model.impact.connect(_on_impact)
+	model.walk_rate = data.move_speed / (2.6 if data.move_speed >= 2.5 else 1.4)
 	AudioManager.play_voice(String(data.id) + "_deploy")
 	model.death_finished.connect(queue_free)
 	_build_ring()
@@ -190,6 +192,8 @@ func _die() -> void:
 		_ring.visible = false
 	if _status_fx:
 		_status_fx.emitting = false
+	if _frost:
+		_frost.visible = false
 	model.play_death()
 	super._die()
 
@@ -200,6 +204,12 @@ func _update_status_visuals() -> void:
 	elif poison_time > 0.0:
 		tint = Color(0.45, 1.0, 0.25, 0.3 + 0.15 * sin(Time.get_ticks_msec() * 0.012))
 	model.status_tint = tint
+	var slowed := slow_time > 0.0
+	if slowed and _frost == null:
+		_frost = VFX.frost_shell(self, 1.2 * ArenaLayout.UNIT_VISUAL_SCALE * (1.6 if data.id == &"stone_golem" else 1.0))
+		_frost.position.y = model.position.y
+	if _frost:
+		_frost.visible = slowed
 	var want_fx := poison_time > 0.0
 	if want_fx and _status_fx == null:
 		_status_fx = VFX.status_bubbles(self, Color(0.5, 1.0, 0.3))

@@ -58,6 +58,8 @@ func _ready() -> void:
 	battle.crowns_changed.connect(_on_crowns)
 	battle.phase_changed.connect(_on_phase)
 	battle.battle_finished.connect(_on_finished)
+	battle.tower_destroyed.connect(_on_tower_destroyed_fx)
+	battle.card_played.connect(_on_card_played_fx)
 	get_viewport().size_changed.connect(_layout)
 	_layout()
 	_refresh_elixir()
@@ -263,6 +265,55 @@ func _layout() -> void:
 	_elixir_fill.queue_redraw()
 
 # ------------------------------------------------------------------ updates
+# ------------------------------------------------------------------ juice
+## A crown pops out of a destroyed tower and flies into the crown counter.
+func _on_tower_destroyed_fx(t: TowerController) -> void:
+	var cam := battle.camera
+	var from := cam.unproject_position(t.global_position + Vector3(0, 3.0, 0))
+	var team := 1 - t.team
+	var idx := clampi(battle.crowns[team] - 1, 0, 2)
+	var target: Control = _crowns[team][idx]
+	var ic := UIIcon.new()
+	ic.kind = &"crown_blue" if team == 0 else &"crown_red"
+	ic.size = Vector2(96, 84)
+	ic.pivot_offset = ic.size * 0.5
+	ic.position = from - ic.size * 0.5
+	ic.scale = Vector2(0.2, 0.2)
+	root.add_child(ic)
+	var to := target.get_global_rect().get_center() - ic.size * 0.5
+	var tw := ic.create_tween()
+	tw.tween_property(ic, "scale", Vector2(1.4, 1.4), 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(ic, "position:y", ic.position.y - 60, 0.25)
+	tw.tween_interval(0.25)
+	tw.tween_property(ic, "position", to, 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.parallel().tween_property(ic, "scale", Vector2(0.35, 0.35), 0.5)
+	tw.tween_callback(ic.queue_free)
+
+## The played card flies from the hand to where the monster lands.
+func _on_card_played_fx(team: int, data: MonsterData, pos: Vector3) -> void:
+	if team != 0:
+		return
+	var idx := battle.card_manager.hand.find(data)
+	if idx < 0:
+		return
+	var src: CardView = cards[idx]
+	var ghost := CardView.new().setup(data, src.level)
+	ghost.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ghost.custom_minimum_size = src.size
+	ghost.size = src.size
+	ghost.position = src.get_global_rect().position
+	root.add_child(ghost)
+	var to := battle.camera.unproject_position(pos) - src.size * 0.25
+	ghost.pivot_offset = src.size * 0.5
+	var tw := ghost.create_tween().set_parallel(true)
+	tw.tween_property(ghost, "position", to, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.tween_property(ghost, "scale", Vector2(0.35, 0.35), 0.22)
+	tw.tween_property(ghost, "rotation", 0.4, 0.22)
+	tw.tween_property(ghost, "modulate:a", 0.0, 0.12).set_delay(0.12)
+	tw.chain().tween_callback(ghost.queue_free)
+	# the used card slot bounces back in
+	src.scale = Vector2(0.8, 0.8)
+
 # ------------------------------------------------------------------ pause
 func open_pause() -> void:
 	if _pause_layer != null or battle.is_finished():

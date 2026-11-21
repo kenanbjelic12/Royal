@@ -217,6 +217,10 @@ func damage_area(center: Vector3, r: float, amount: float, attacker_team: int, s
 		c.take_damage(amount, source)
 	return victims
 
+func show_damage(c: Combatant, amount: float) -> void:
+	var col := Color("#fff4c2") if c.is_building else (Color("#9fd0ff") if c.team == 0 else Color("#ffb3b3"))
+	VFX.damage_number(effects, c.aim_point() + Vector3(0, 0.9 if c.is_building else 0.5, 0), amount, col, c.is_building)
+
 func shake_camera(amp: float, dur: float) -> void:
 	if camera:
 		camera.shake(amp, dur)

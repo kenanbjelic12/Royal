@@ -24,6 +24,7 @@ var poison_dps := 0.0
 var poison_time := 0.0
 var _poison_tick := 0.0
 var _poison_source: Combatant
+var _silent_damage := false   # poison ticks do not spawn damage numbers
 
 func is_alive() -> bool:
 	return hp > 0.0 and is_inside_tree() and not is_queued_for_deletion()
@@ -41,6 +42,8 @@ func take_damage(amount: float, _source: Combatant = null) -> void:
 		return
 	hp = maxf(hp - amount, 0.0)
 	damaged.emit(self, amount)
+	if battle and not _silent_damage and battle.has_method("show_damage"):
+		battle.show_damage(self, amount)
 	_on_damaged(amount)
 	if hp <= 0.0:
 		_die()
@@ -71,7 +74,9 @@ func _tick_status(delta: float) -> void:
 		_poison_tick += delta
 		if _poison_tick >= 0.5:
 			_poison_tick -= 0.5
+			_silent_damage = true
 			take_damage(poison_dps * 0.5, _poison_source if is_instance_valid(_poison_source) else null)
+			_silent_damage = false
 		if poison_time <= 0.0:
 			poison_dps = 0.0
 			_poison_tick = 0.0
