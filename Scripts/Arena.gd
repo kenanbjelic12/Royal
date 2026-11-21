@@ -27,6 +27,8 @@ func _ready() -> void:
 		_build_waterfall(s)
 	_build_border()
 	_build_decorations()
+	# static batching: thousands of decoration parts -> a few dozen draw calls
+	MeshBatcher.bake_tree(self)
 	_build_deploy_overlay()
 
 # ------------------------------------------------------------------ materials
@@ -57,7 +59,7 @@ func _box(size: Vector3) -> BoxMesh:
 	b.size = size
 	return b
 
-func _sphere(r: float, h := -1.0, seg := 16) -> SphereMesh:
+func _sphere(r: float, h := -1.0, seg := 12) -> SphereMesh:
 	var s := SphereMesh.new()
 	s.radius = r
 	s.height = r * 2.0 if h < 0 else h
@@ -65,7 +67,7 @@ func _sphere(r: float, h := -1.0, seg := 16) -> SphereMesh:
 	s.rings = seg / 2
 	return s
 
-func _cyl(top: float, bottom: float, h: float, seg := 12) -> CylinderMesh:
+func _cyl(top: float, bottom: float, h: float, seg := 10) -> CylinderMesh:
 	var c := CylinderMesh.new()
 	c.top_radius = top
 	c.bottom_radius = bottom
@@ -310,6 +312,19 @@ func _build_decorations() -> void:
 			if absf(p.z) < 3.5:
 				continue
 			_bush(p)
+	# outer forest so wide (landscape / PC) screens never look empty
+	for i in 70:
+		var sx := -1.0 if i % 2 == 0 else 1.0
+		var p := Vector3(sx * _rng.randf_range(hw + 4.5, hw + 22.0), 0, _rng.randf_range(-20.0, 20.0))
+		if absf(p.z) < 2.2 and absf(p.x) < hw + 6.0:
+			continue
+		match i % 5:
+			0, 1, 2: _tree(p, _rng.randf_range(0.9, 1.5))
+			3: _bush(p)
+			4: _rock(p, _rng.randf_range(0.4, 0.9))
+	for i in 30:
+		var sx := -1.0 if i % 2 == 0 else 1.0
+		_flower_patch(Vector3(sx * _rng.randf_range(hw + 4.0, hw + 20.0), 0, _rng.randf_range(-20.0, 20.0)))
 	# tiny details inside the field, hugging the walls (no gameplay impact)
 	for p in [Vector3(-8.3, 0, 6.5), Vector3(8.3, 0, -6.5), Vector3(-8.4, 0, -4.2), Vector3(8.4, 0, 4.0), Vector3(-8.4, 0, 15.2), Vector3(8.4, 0, -15.2)]:
 		_flower_patch(p, 0.6)
@@ -343,8 +358,8 @@ func _flower_patch(p: Vector3, spread := 1.0) -> void:
 	var colors := [Color("#ff6fae"), Color("#ffe14d"), Color("#ffffff"), Color("#9a7bff"), Color("#ff8a3d")]
 	for i in 5:
 		var fp := p + Vector3(_rng.randf_range(-0.5, 0.5) * spread, 0, _rng.randf_range(-0.5, 0.5) * spread)
-		_mesh(_cyl(0.015, 0.015, 0.18, 4), _mat(Color("#3f9e3a")), fp + Vector3(0, 0.09, 0), Vector3.ZERO, Vector3.ONE, false)
-		_mesh(_sphere(0.075, 0.06, 8), _mat(colors[_rng.randi() % colors.size()], 0.6), fp + Vector3(0, 0.19, 0), Vector3.ZERO, Vector3.ONE, false)
+		_mesh(_cyl(0.015, 0.015, 0.18, 3), _mat(Color("#3f9e3a")), fp + Vector3(0, 0.09, 0), Vector3.ZERO, Vector3.ONE, false)
+		_mesh(_sphere(0.075, 0.06, 6), _mat(colors[_rng.randi() % colors.size()], 0.6), fp + Vector3(0, 0.19, 0), Vector3.ZERO, Vector3.ONE, false)
 
 func _mushroom(p: Vector3) -> void:
 	_mesh(_cyl(0.07, 0.09, 0.22, 8), _mat(Color("#f4ead6")), p + Vector3(0, 0.11, 0))

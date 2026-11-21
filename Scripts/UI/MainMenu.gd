@@ -23,7 +23,22 @@ func _ready() -> void:
 	_build()
 	EconomyManager.changed.connect(_refresh)
 	_refresh()
+	get_viewport().size_changed.connect(_apply_layout)
+	_apply_layout()
 	AudioManager.play_music(&"menu")
+
+## Compact layout for short / landscape screens (PC windows).
+func _apply_layout() -> void:
+	var vs := get_viewport().get_visible_rect().size
+	var compact := vs.x > vs.y * 0.9
+	(ui.find_child("LogoCrown", true, false) as Control).visible = not compact
+	(ui.find_child("DeckTitle", true, false) as Control).visible = not compact
+	(ui.find_child("Logo", true, false) as Label).add_theme_font_size_override("font_size", 56 if compact else 78)
+	for slot in _chest_slots:
+		slot.custom_minimum_size = Vector2(158, 96 if compact else 150)
+	for cv in (ui.find_child("DeckRow", true, false) as Control).get_children():
+		(cv as Control).custom_minimum_size = Vector2(70, 89) if compact else Vector2(92, 117)
+	_battle_btn.custom_minimum_size = Vector2(380, 84 if compact else 116)
 
 func _build() -> void:
 	# soft vignette gradient so UI text stays readable over the 3D scene
@@ -103,6 +118,7 @@ func _build() -> void:
 	logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(logo)
 	var crown := UIIcon.new()
+	crown.name = "LogoCrown"
 	crown.kind = &"crown_gold"
 	crown.custom_minimum_size = Vector2(0, 86)
 	logo.add_child(crown)
@@ -122,8 +138,10 @@ func _build() -> void:
 
 	# --- battle deck preview
 	var deck_title := UIStyle.label("Battle Deck", 22, Color("#c9d4ff"), 5)
+	deck_title.name = "DeckTitle"
 	root.add_child(deck_title)
 	var deck_row := HBoxContainer.new()
+	deck_row.name = "DeckRow"
 	deck_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	deck_row.add_theme_constant_override("separation", 8)
 	root.add_child(deck_row)

@@ -223,6 +223,7 @@ func _layout() -> void:
 	var x0 := (vp.x - total_w) * 0.5
 	for i in cards.size():
 		var cv := cards[i]
+		cv.custom_minimum_size = Vector2(cw, ch)
 		cv.size = Vector2(cw, ch)
 		cv.base_position = Vector2(x0 + i * (cw + gap), margin + 6)
 		cv.position = cv.base_position

@@ -19,7 +19,8 @@ func _draw() -> void:
 	if battle == null or battle.camera == null:
 		return
 	var cam := battle.camera
-	ui_scale = clampf(get_viewport_rect().size.x / 720.0, 0.7, 1.6)
+	var vs := get_viewport_rect().size
+	ui_scale = clampf(minf(vs.x, vs.y) / 720.0, 0.7, 1.6)
 	for team in 2:
 		for t: TowerController in battle.get_towers(team):
 			if t.is_alive():

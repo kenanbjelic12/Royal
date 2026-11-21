@@ -44,7 +44,7 @@ var _t := 0.0
 var _lift := 0.0
 
 func _init() -> void:
-	custom_minimum_size = Vector2(124, 158)
+	custom_minimum_size = Vector2(40, 51)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
 func setup(p_data: MonsterData, p_level := 1) -> CardView:
@@ -109,7 +109,13 @@ func _layout() -> void:
 	_drop.size = Vector2(s.x * 0.42, s.x * 0.42)
 	_name.position = Vector2(m, s.y - m - s.y * 0.19)
 	_name.size = Vector2(s.x - m * 2, s.y * 0.19)
-	_name.add_theme_font_size_override("font_size", int(clampf(s.x * 0.125, 11, 26)))
+	# shrink long names so they always fit on the ribbon
+	var fs := int(clampf(s.x * 0.125, 9, 26))
+	var font := get_theme_default_font()
+	if data and font:
+		while fs > 8 and font.get_string_size(data.display_name, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x > _name.size.x - 6:
+			fs -= 1
+	_name.add_theme_font_size_override("font_size", fs)
 	_cost.position = _drop.position + Vector2(0, s.x * 0.03)
 	_cost.size = _drop.size
 	_cost.add_theme_font_size_override("font_size", int(s.x * 0.2))

@@ -17,6 +17,7 @@ var _rng := RandomNumberGenerator.new()
 var _last_played: StringName = &""
 var _tank_push_next := true
 var _recent: Array[StringName] = []
+var _punish_cooldown := 0.0
 var _pending_support: Array = []   # [{data, lane, at_time}]
 var log_decisions := false
 var decisions: Array[String] = []
@@ -30,6 +31,7 @@ func _process(delta: float) -> void:
 	if battle == null or battle.is_finished():
 		return
 	_clock += delta
+	_punish_cooldown -= delta
 	_think -= delta
 	if _think > 0.0:
 		return
@@ -96,6 +98,8 @@ func _defend(threats: Array) -> bool:
 		if not battle.elixir[team].can_afford(c.elixir_cost):
 			continue
 		var s := matchup_score(c, main.data, main.hp)
+		if s <= 0.0:
+			continue   # cannot fight this threat at all
 		if c.id == _last_played:
 			s *= 0.9
 		elif not _recent.has(c.id):
@@ -107,7 +111,12 @@ func _defend(threats: Array) -> bool:
 	if best == null or best_score <= 0.05:
 		return false
 	var pos := _defense_position(best, main)
-	return _play(best, pos, "defend vs %s" % main.data.id)
+	if _play(best, pos, "defend vs %s" % main.data.id):
+		# counter-push: sometimes follow a good defence with support
+		if _rng.randf() < 0.4:
+			_queue_support(ArenaLayout.lane_of(pos.x), 5.0)
+		return true
+	return false
 
 ## How good is card `c` against enemy monster `e` (higher = better).
 func matchup_score(c: MonsterData, e: MonsterData, e_hp := -1.0) -> float:
@@ -232,8 +241,11 @@ func _support_push() -> bool:
 
 ## Quick counter-punch with a cheap fast unit when the opponent is low on elixir.
 func _punish() -> bool:
-	if battle.elixir[1 - team].elixir > 2.5 or elixir() < 5.0:
+	if _punish_cooldown > 0.0 or battle.elixir[1 - team].elixir > 2.0 or elixir() < 7.0:
 		return false
+	if not battle.get_units(1 - team).is_empty():
+		return false   # opponent still has troops that would defend
+	_punish_cooldown = 25.0
 	var fast: MonsterData = _best_by(func(c): return c.move_speed if c.move_speed >= 2.5 and battle.elixir[team].can_afford(c.elixir_cost) else -1.0)
 	if fast == null:
 		return false

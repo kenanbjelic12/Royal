@@ -17,6 +17,8 @@ const OUTLINE_COLOR := Color(0.09, 0.06, 0.12)
 
 @export var outline_enabled := true
 @export var outline_width := 0.022
+## Merge static parts per joint (big draw-call saving). Off for editing.
+@export var batch_meshes := true
 
 var team_color := Color(0.25, 0.55, 1.0)
 var t := 0.0
@@ -46,6 +48,8 @@ var _outline_mat: StandardMaterial3D
 var _flash_mat: StandardMaterial3D
 var _meshes: Array[MeshInstance3D] = []
 var _root: Node3D               # everything is under this node (death/hit squash)
+var _skin: SkinBaker
+var _overlay_on := false
 
 # ---------------------------------------------------------------- lifecycle
 func _ready() -> void:
@@ -64,6 +68,11 @@ func _ready() -> void:
 	_flash_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	_flash_mat.albedo_color = Color(1, 1, 1, 0)
 	build()
+	# bake all parts into one skinned mesh (joints become skeleton bones)
+	if batch_meshes:
+		_skin = SkinBaker.new()
+		if not _skin.bake(_root, parts.values()):
+			_skin = null
 	for p in parts.values():
 		_rest[p] = p.transform
 	_apply_pose(0.0)
@@ -174,6 +183,8 @@ func _apply_pose(delta: float) -> void:
 			p.transform = _rest[p]
 	pose(delta)
 	_post_pose(delta)
+	if _skin:
+		_skin.sync()
 
 func _post_pose(delta: float) -> void:
 	# hit: squash + white flash
@@ -187,6 +198,11 @@ func _post_pose(delta: float) -> void:
 		_flash_mat.albedo_color = Color(1, 1, 1, flash)
 	else:
 		_flash_mat.albedo_color = status_tint
+	# the overlay is an extra render pass: only attach it while visible
+	var want := _flash_mat.albedo_color.a > 0.01
+	if _skin and want != _overlay_on:
+		_overlay_on = want
+		_skin.set_overlay(_flash_mat if want else null)
 	# death: hop, tip over, shrink
 	if death_t >= 0.0:
 		death_t += delta
@@ -263,7 +279,7 @@ func add_mesh(pname: String, parent: Node3D, mesh: Mesh, material: Material, pos
 	_meshes.append(mi)
 	return mi
 
-func sphere(r: float, h := -1.0, seg := 24) -> SphereMesh:
+func sphere(r: float, h := -1.0, seg := 16) -> SphereMesh:
 	var m := SphereMesh.new()
 	m.radius = r
 	m.height = (r * 2.0) if h < 0.0 else h
@@ -279,7 +295,7 @@ func capsule(r: float, h: float, seg := 16) -> CapsuleMesh:
 	m.rings = 6
 	return m
 
-func cyl(top: float, bottom: float, h: float, seg := 20) -> CylinderMesh:
+func cyl(top: float, bottom: float, h: float, seg := 14) -> CylinderMesh:
 	var m := CylinderMesh.new()
 	m.top_radius = top
 	m.bottom_radius = bottom

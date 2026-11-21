@@ -6,6 +6,9 @@ extends MonsterModel
 ## partial match): Idle, Walk|Run|Fly, Attack|Cast, Hit, Death, Select|Taunt.
 
 var glb_path := ""
+
+func _init() -> void:
+	batch_meshes = false   # imported meshes are already optimised
 var _player: AnimationPlayer
 var _current := ""
 

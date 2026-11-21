@@ -24,6 +24,10 @@ func _ready() -> void:
 	_cam.fov = 50
 	add_child(_cam)
 	_build()
+	var animated: Array = []
+	for n in _flags + _clouds:
+		animated.append_array(n.find_children("*", "MeshInstance3D", true, false))
+	MeshBatcher.bake_tree(self, animated)
 
 func _m(c: Color, rough := 0.85, emit := 0.0) -> StandardMaterial3D:
 	var key := "%s%.2f%.2f" % [c.to_html(), rough, emit]
