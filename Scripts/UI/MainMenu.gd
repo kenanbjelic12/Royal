@@ -32,12 +32,9 @@ func _apply_layout() -> void:
 	var vs := get_viewport().get_visible_rect().size
 	var compact := vs.x > vs.y * 0.9
 	(ui.find_child("LogoCrown", true, false) as Control).visible = not compact
-	(ui.find_child("DeckTitle", true, false) as Control).visible = not compact
 	(ui.find_child("Logo", true, false) as Label).add_theme_font_size_override("font_size", 56 if compact else 78)
 	for slot in _chest_slots:
 		slot.custom_minimum_size = Vector2(158, 96 if compact else 150)
-	for cv in (ui.find_child("DeckRow", true, false) as Control).get_children():
-		(cv as Control).custom_minimum_size = Vector2(70, 89) if compact else Vector2(92, 117)
 	_battle_btn.custom_minimum_size = Vector2(380, 84 if compact else 116)
 
 func _build() -> void:
@@ -135,21 +132,6 @@ func _build() -> void:
 	mid.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	mid.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(mid)
-
-	# --- battle deck preview
-	var deck_title := UIStyle.label("Battle Deck", 22, Color("#c9d4ff"), 5)
-	deck_title.name = "DeckTitle"
-	root.add_child(deck_title)
-	var deck_row := HBoxContainer.new()
-	deck_row.name = "DeckRow"
-	deck_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	deck_row.add_theme_constant_override("separation", 8)
-	root.add_child(deck_row)
-	for d in CardDatabase.deck():
-		var cv := CardView.new().setup(d, EconomyManager.get_card_level(d.id))
-		cv.custom_minimum_size = Vector2(92, 117)
-		cv.pressed.connect(func(_c): GameManager.goto(GameManager.SCENE_CARDS))
-		deck_row.add_child(cv)
 
 	# --- battle button
 	_battle_btn = UIStyle.button("BATTLE", UIStyle.GOLD, 52, Vector2(380, 116))
