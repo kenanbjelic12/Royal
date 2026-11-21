@@ -27,10 +27,34 @@ func _ready() -> void:
 func _stream(sound: StringName) -> AudioStream:
 	if _cache.has(sound):
 		return _cache[sound]
-	var path := AUDIO_DIR + String(sound) + ".wav"
-	var s: AudioStream = load(path) if ResourceLoader.exists(path) else null
+	var s: AudioStream = null
+	for ext: String in [".mp3", ".ogg", ".wav"]:   # recorded / AI-generated audio wins over synthesized wav
+		var path := AUDIO_DIR + String(sound) + ext
+		if ResourceLoader.exists(path):
+			s = load(path)
+			break
 	_cache[sound] = s
 	return s
+
+var _variants: Dictionary = {}
+
+## Plays a random variant of a voice line: name, name_1, name_2 ... Returns
+## false when no file exists so callers can fall back to a generic sound.
+func play_voice(base: String, volume_offset := 2.0) -> bool:
+	if not _variants.has(base):
+		var found: Array[StringName] = []
+		if _stream(StringName(base)) != null:
+			found.append(StringName(base))
+		for i in range(1, 6):
+			var n := StringName("%s_%d" % [base, i])
+			if _stream(n) != null:
+				found.append(n)
+		_variants[base] = found
+	var list: Array = _variants[base]
+	if list.is_empty():
+		return false
+	play(list[randi() % list.size()], 0.04, volume_offset)
+	return true
 
 func play(sound: StringName, pitch_var := 0.08, volume_offset := 0.0) -> void:
 	if muted or sound == &"":

@@ -34,6 +34,7 @@ func select(i: int) -> void:
 		return
 	selected = i
 	AudioManager.play(&"card_select")
+	AudioManager.play_voice(String(hand[i].id) + "_select")
 	_make_ghost(hand[i])
 	battle.arena.show_deploy_overlay(true, battle.open_enemy_lanes(team))
 	selection_changed.emit(selected)

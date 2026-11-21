@@ -44,6 +44,7 @@ func _ready() -> void:
 	model.position.y = ArenaLayout.FLY_HEIGHT if is_flying else 0.0
 	model.rotation.y = facing
 	model.impact.connect(_on_impact)
+	AudioManager.play_voice(String(data.id) + "_deploy")
 	model.death_finished.connect(queue_free)
 	_build_ring()
 	# deploy: drop in from above with a squash
@@ -141,6 +142,8 @@ func _on_impact() -> void:
 		dmg *= data.first_hit_multiplier
 		has_hit_once = true
 	AudioManager.play(data.sfx_attack)
+	if randf() < 0.35:
+		AudioManager.play_voice(String(data.id) + "_attack", -2.0)
 	if data.projectile != MonsterData.ProjectileType.NONE:
 		battle.spawn_projectile({
 			"type": data.projectile, "from": model.get_muzzle_position(), "target": target,
@@ -180,7 +183,8 @@ func _die() -> void:
 		return
 	state = &"dead"
 	velocity = Vector3.ZERO
-	AudioManager.play(&"death")
+	if not AudioManager.play_voice(String(data.id) + "_death"):
+		AudioManager.play(&"death")
 	VFX.death_poof(battle.effects_root(), aim_point())
 	if _ring:
 		_ring.visible = false

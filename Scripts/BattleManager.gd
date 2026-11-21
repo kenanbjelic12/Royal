@@ -331,6 +331,9 @@ func _on_tower_destroyed(t: TowerController) -> void:
 		if king:
 			king.activate()
 	crowns_changed.emit(crowns[0], crowns[1])
+	AudioManager.play_voice("crowd_cheer")
+	if t.team == 0 and t.kind != &"king":
+		AudioManager.play_voice("king_laugh")   # the enemy king gloats
 	tower_destroyed.emit(t)
 	if t.kind == &"king" or phase == &"overtime":
 		# king falls -> instant win; any tower in overtime -> sudden death win
@@ -358,6 +361,7 @@ func _finish(winner: int, reason: String) -> void:
 	result.merge(GameManager.apply_battle_result(result), true)
 	AudioManager.stop_music()
 	AudioManager.play(&"victory" if winner == 0 else &"defeat")
+	AudioManager.play_voice("crowd_victory" if winner == 0 else "crowd_defeat")
 	battle_finished.emit(result)
 
 ## Debug / test helper: ends the match immediately.
