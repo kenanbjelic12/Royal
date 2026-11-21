@@ -33,4 +33,5 @@ radius = 0.5
 mass = 2.0
 model_scale = 1.0
 model_script = ExtResource("2_model")
+model_glb_path = "res://Assets/Monsters/frost_dragon/frost_dragon_rigged.glb"
 sfx_attack = &"ice_shot"

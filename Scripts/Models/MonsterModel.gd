@@ -19,6 +19,8 @@ const OUTLINE_COLOR := Color(0.09, 0.06, 0.12)
 @export var outline_width := 0.022
 ## Merge static parts per joint (big draw-call saving). Off for editing.
 @export var batch_meshes := true
+## Tip-over/hop death motion (off for models with an authored death clip).
+var procedural_death := true
 
 var team_color := Color(0.25, 0.55, 1.0)
 var t := 0.0
@@ -87,6 +89,10 @@ func build() -> void:
 ## Override: animate parts. Use the state helpers (attack_progress() etc).
 func pose(_dt: float) -> void:
 	pass
+
+## Extra meshes that should receive the hit-flash overlay (imported models).
+func overlay_targets() -> Array:
+	return []
 
 ## Override: world position where projectiles spawn.
 func get_muzzle_position() -> Vector3:
@@ -200,16 +206,21 @@ func _post_pose(delta: float) -> void:
 		_flash_mat.albedo_color = status_tint
 	# the overlay is an extra render pass: only attach it while visible
 	var want := _flash_mat.albedo_color.a > 0.01
-	if _skin and want != _overlay_on:
+	if want != _overlay_on:
 		_overlay_on = want
-		_skin.set_overlay(_flash_mat if want else null)
+		if _skin:
+			_skin.set_overlay(_flash_mat if want else null)
+		for g: GeometryInstance3D in overlay_targets():
+			g.material_overlay = _flash_mat if want else null
 	# death: hop, tip over, shrink
 	if death_t >= 0.0:
 		death_t += delta
 		var p := death_progress()
-		_root.position.y += bump(minf(p * 2.0, 1.0)) * 0.35
-		_root.rotation.x += ease_in_out(p * 1.4) * 1.3
-		var s := 1.0 - ease_in(clampf((p - 0.45) / 0.55, 0, 1))
+		if procedural_death:
+			_root.position.y += bump(minf(p * 2.0, 1.0)) * 0.35
+			_root.rotation.x += ease_in_out(p * 1.4) * 1.3
+		var shrink_from := 0.45 if procedural_death else 0.7
+		var s := 1.0 - ease_in(clampf((p - shrink_from) / (1.0 - shrink_from), 0, 1))
 		_root.scale *= maxf(s, 0.001)
 		if death_t >= death_len and death_t - delta < death_len:
 			death_finished.emit()

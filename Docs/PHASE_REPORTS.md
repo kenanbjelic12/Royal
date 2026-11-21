@@ -108,8 +108,8 @@ Na landscapeu su ispravljene veličina health barova, preklapanje karata s elixi
 
 ## Šta NIJE urađeno ili ograničenja (iskreno)
 
-- **Meshy AI nije korišten.** API traži plaćeni plan i ključ, a kredite nisam kupovao. Svi modeli su originalni proceduralni modeli.
-  Sistem je spreman za zamjenu GLB-om (`Docs/MESHY_PIPELINE.md`, gotovi promptovi).
+- ~~Meshy AI nije korišten~~: **ažurirano**, svih 5 čudovišta su sada Meshy AI modeli (vidi `Docs/MESHY_PIPELINE.md`).
+- Meshy modeli imaju ~15.6k trouglova; u velikoj gužvi to je ~1.4M trouglova po frameu. Za slabije telefone preporučen je Meshy remesh na ~6–8k.
 - Materijali su PBR bez teksturnih mapa (boja, hrapavost, metal, rim i outline). Nema ručno slikanih tekstura.
 - Animacije su proceduralne (kod pomjera kosti). Nisu ručno keyframeovane.
 - Android build nije napravljen ni testiran na uređaju: ovdje nema Android SDK-a ni export templatea. Mobilni ekrani su testirani samo kroz rezolucije.

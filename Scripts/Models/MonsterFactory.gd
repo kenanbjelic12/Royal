@@ -8,6 +8,7 @@ static func create_model(data: MonsterData) -> MonsterModel:
 	if data.model_glb_path != "" and ResourceLoader.exists(data.model_glb_path):
 		var m := GLBMonsterModel.new()
 		m.glb_path = data.model_glb_path
+		m.monster_id = data.id
 		return m
 	if data.model_script:
 		return data.model_script.new()

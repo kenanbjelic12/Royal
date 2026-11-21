@@ -40,7 +40,7 @@ func _ready() -> void:
 	var x := 0.0
 	var models: Array = []
 	for d: MonsterData in ids:
-		var m: MonsterModel = d.model_script.new()
+		var m: MonsterModel = MonsterFactory.create_model(d)
 		add_child(m)
 		m.scale = Vector3.ONE * d.model_scale
 		m.position = Vector3(x, 2.2 if d.is_flying else 0.0, 0)

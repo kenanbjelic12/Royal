@@ -33,4 +33,5 @@ radius = 0.38
 mass = 1.0
 model_scale = 1.0
 model_script = ExtResource("2_model")
+model_glb_path = "res://Assets/Monsters/shadow_assassin/shadow_assassin_rigged.glb"
 sfx_attack = &"dagger"

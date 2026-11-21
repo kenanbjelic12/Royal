@@ -85,7 +85,11 @@ func test_card_summons() -> void:
 		if unit:
 			await get_tree().process_frame
 			check("%s spawns %s monster" % [d.id, d.display_name], unit.data.id == d.id)
-			check("%s uses its own model script" % d.id, unit.model.get_script() == d.model_script)
+			var own_model: bool = (unit.model is GLBMonsterModel and (unit.model as GLBMonsterModel).glb_path == d.model_glb_path) if d.model_glb_path != "" else unit.model.get_script() == d.model_script
+			check("%s uses its own 3D model" % d.id, own_model)
+			if d.model_glb_path != "":
+				var anims_ok: bool = unit.model._player != null and unit.model._player.has_animation("m/attack") and unit.model._player.has_animation("m/death") and unit.model._player.has_animation("m/select")
+				check("%s Meshy model has idle/walk/attack/hit/death/select" % d.id, anims_ok)
 			check("%s cost %d elixir" % [d.id, d.elixir_cost], is_equal_approx(spent, d.elixir_cost), "spent %.2f" % spent)
 		battle.units.back().queue_free()
 		battle.units.pop_back()

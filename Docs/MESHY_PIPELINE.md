@@ -1,14 +1,39 @@
 # Meshy AI → Godot pipeline (manual)
 
-## Status
+## Status: all 5 monsters are Meshy AI models
 
-Meshy AI was **not** used to generate the current models. Meshy's API requires a
-paid plan / API key; no key exists in this environment, and the brief says not to
-buy credits or work around limits. Instead, all five monsters (and the towers) are
-**original, procedurally built stylised models** (`Scripts/Models/*Model.gd`) with
-procedural animations. They are real in-game models, not coloured copies of one mesh.
+Generated through the Meshy API with `Tools/meshy_pipeline.py` (task ids in
+`Assets/Monsters/meshy_state.json`):
 
-The game is ready to swap any monster for a Meshy model without code changes.
+| Step | What | Credits |
+|---|---|---|
+| Text-to-3D preview | 5 models (Stone Golem generated twice: first one looked angry) | 6 x 20 |
+| Refine | PBR textures (base colour, metal/rough, normal) | 5 x 10 |
+| Rigging | humanoid skeleton (24 bones), incl. walk/run clips | 5 x 5 |
+| Animations | idle, attack, hit, death, select for each monster | 20 x 3 |
+
+Animation clips (Meshy library action ids):
+
+| Monster | idle | attack | hit | death | select (special) |
+|---|---|---|---|---|---|
+| Fire Knight | 89 Combat Idle | 128 Heavy Hammer Swing | 178 Hit Reaction | 8 Dead | 101 Sword Shout |
+| Shadow Assassin | 89 Combat Idle | 92 Double Combo Attack | 179 Hit Reaction 1 | 189 Dying Backwards | 91 Double Blade Spin |
+| Stone Golem | 0 Idle | 127 Charged Ground Slam | 174 Face Punch Reaction | 187 Knock Down | 88 Chest Pound Taunt |
+| Frost Dragon | 12 Idle 2 | 125 Charged Spell Cast | 178 Hit Reaction | 8 Dead | 59 Victory Cheer |
+| Poison Witch | 11 Idle 1 | 129 Mage Spell Cast | 173 Slap Reaction | 185 Shot and Slow Fall Backward | 44 Happy Jump Female |
+
+In the project:
+- `Assets/Monsters/<id>/<id>_rigged.glb`: rigged, textured character (textures VRAM-compressed, max 1024 px).
+- `Assets/Monsters/<id>/<id>_anims.res`: AnimationLibrary built by `Tools/MeshyImport.tscn`
+  from the animation GLBs (only bone tracks are kept; the 8 MB source GLBs are not committed).
+- `Scripts/Models/GLBMonsterModel.gd`: plays the clips per game state, syncs the attack impact,
+  adds outline + hit flash, and attaches weapons (sword, daggers, staff) to the hand bones because
+  Meshy leaves held items out in A-pose.
+- The old procedural models (`Scripts/Models/*Model.gd`) are kept as a fallback: clear
+  `model_glb_path` in a card to use them.
+
+Regenerate / extend: `python3 Tools/meshy_pipeline.py preview|refine|rig|animate|download`, then
+run `Tools/MeshyImport.tscn` and `Tools/PortraitRenderer.tscn`.
 
 ## How to replace a monster with a Meshy model
 

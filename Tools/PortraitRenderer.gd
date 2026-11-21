@@ -7,9 +7,9 @@ const SIZE := Vector2i(512, 600)
 ## Per monster framing: pose, pose time (s), camera pos, look-at, model yaw.
 const SHOTS := {
 	&"fire_knight": {"pose": "select", "time": 0.5, "cam": Vector3(-1.3, 1.5, -3.6), "look": Vector3(0, 1.05, 0), "fov": 36.0},
-	&"shadow_assassin": {"pose": "attack", "time": 0.16, "cam": Vector3(-1.1, 1.2, -3.0), "look": Vector3(0, 0.62, 0), "fov": 34.0},
-	&"stone_golem": {"pose": "select", "time": 0.5, "cam": Vector3(-2.0, 2.3, -5.6), "look": Vector3(0, 1.15, 0), "fov": 36.0},
-	&"frost_dragon": {"pose": "attack", "time": 0.42, "cam": Vector3(-1.3, 1.9, -3.2), "look": Vector3(0, 0.1, 0), "fov": 36.0},
+	&"shadow_assassin": {"pose": "walk", "time": 0.45, "cam": Vector3(-0.9, 1.25, -2.9), "look": Vector3(0, 0.78, 0), "fov": 34.0},
+	&"stone_golem": {"pose": "idle", "time": 0.5, "cam": Vector3(-1.3, 1.9, -4.2), "look": Vector3(0, 1.1, 0), "fov": 36.0},
+	&"frost_dragon": {"pose": "idle", "time": 0.5, "cam": Vector3(-1.0, 1.35, -3.1), "look": Vector3(0, 0.68, 0), "fov": 36.0},
 	&"poison_witch": {"pose": "select", "time": 0.45, "cam": Vector3(-1.2, 1.6, -3.7), "look": Vector3(0, 1.05, 0), "fov": 36.0},
 }
 
@@ -49,6 +49,7 @@ func _render(d: MonsterData, path: String) -> void:
 	match shot.pose:
 		"select": m.play_select()
 		"attack": m.play_attack(1.0)
+		"walk": m.set_moving(true)
 	for i in int(shot.time * 60.0):
 		m._apply_pose(1.0 / 60.0)
 	var cam := Camera3D.new()

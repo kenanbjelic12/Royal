@@ -33,4 +33,5 @@ radius = 0.4
 mass = 1.0
 model_scale = 1.0
 model_script = ExtResource("2_model")
+model_glb_path = "res://Assets/Monsters/poison_witch/poison_witch_rigged.glb"
 sfx_attack = &"poison_cast"

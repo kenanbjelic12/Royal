@@ -33,4 +33,5 @@ radius = 0.85
 mass = 10.0
 model_scale = 1.0
 model_script = ExtResource("2_model")
+model_glb_path = "res://Assets/Monsters/stone_golem/stone_golem_rigged.glb"
 sfx_attack = &"rock_slam"
