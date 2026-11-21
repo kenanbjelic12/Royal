@@ -36,6 +36,7 @@ pointing/emulate_touch_from_mouse=false
 pointing/emulate_mouse_from_touch=true
 
 [rendering]
+mesh_lod/lod_change/threshold_pixels=6.0
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
