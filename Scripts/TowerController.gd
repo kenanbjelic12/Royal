@@ -54,6 +54,9 @@ func _ready() -> void:
 	# lean slightly toward the high camera so walls, banner and torches read
 	# like the painted arena (purely visual)
 	model.rotation.x = deg_to_rad(TILT_DEG)
+	# guards look toward the enemy side until they have a target
+	if team == 0:
+		model.face_yaw(180.0)
 	model.impact.connect(_on_impact)
 
 func activate() -> void:

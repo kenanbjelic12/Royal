@@ -77,7 +77,7 @@ func _unit_height(u: MonsterController) -> float:
 		_: return 1.55
 
 func _draw_tower(cam: Camera3D, t: TowerController) -> void:
-	var wp := t.global_position + Vector3(0, 3.7 if t.kind == &"king" else 3.4, 0)
+	var wp := t.global_position + Vector3(0, 3.8 if t.kind == &"king" else 4.5, 0)
 	if cam.is_position_behind(wp):
 		return
 	var p := cam.unproject_position(wp)

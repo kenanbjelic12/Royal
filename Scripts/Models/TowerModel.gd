@@ -2,7 +2,7 @@
 class_name TowerModel
 extends MonsterModel
 ## Stylised stone tower matching the painted arena: princess towers carry a
-## ballista turret, the king tower a cannon (drooping while it sleeps).
+## little archer, the king tower a cannon (drooping while it sleeps).
 ## Team-coloured crown, crest banner, torches and a waving flag.
 
 var kind := &"princess"
@@ -18,7 +18,7 @@ const GOLD := Color("#f2b632")
 func build() -> void:
 	# Squat round cobblestone tower: team-coloured crenellated crown, a big
 	# banner with a golden crown on the front, burning torches on the rim and
-	# a small turret with a flag (cannon on the king, ballista on princesses).
+	# a small turret with a flag (cannon on the king, an archer on princess towers).
 	outline_width = 0.03
 	# deeper royal red / blue like the painted towers
 	var tc := Color("#d8342f") if team_color.r > team_color.b else Color("#2f72e0")
@@ -92,17 +92,19 @@ func build() -> void:
 		add_mesh("", fl, sphere(0.24, 0.5, 10), glow_mat(Color(1.0, 0.32, 0.04), 1.2, 0.6), Vector3(0, 0.16, 0), Vector3.ZERO, Vector3.ONE, false)
 		add_mesh("", fl, sphere(0.15, 0.4, 10), glow_mat(Color(1.0, 0.5, 0.08), 1.25), Vector3(0, 0.15, 0), Vector3.ZERO, Vector3.ONE, false)
 		add_mesh("", fl, sphere(0.08, 0.22, 8), glow_mat(Color(1.0, 0.85, 0.4), 1.3), Vector3(0, 0.1, 0), Vector3.ZERO, Vector3.ONE, false)
-	# turret (guard) in the middle: rotates toward targets
+	# guard in the middle (rotates toward targets): cannon turret on the king,
+	# a little archer on princess towers
 	var guard := pivot("guard", body, Vector3(0, top_y + 0.4, 0))
 	var tr := r * 0.42
-	add_mesh("", guard, cyl(tr, tr * 1.08, 0.5, 20), mat(Color("#a69e94"), 0.95), Vector3(0, 0.25, 0))
-	add_mesh("", guard, cyl(tr * 1.12, tr * 1.12, 0.14, 20), mat(tc, 0.6), Vector3(0, 0.55, 0))
-	add_mesh("", guard, cyl(tr * 0.8, tr * 0.8, 0.05, 20), mat(Color("#2c241f"), 0.9), Vector3(0, 0.62, 0))
-	for i in 6:
-		var ang := TAU * i / 6.0
-		add_mesh("", guard, box(Vector3(0.14, 0.14, 0.12)), mat(tc_dark, 0.6), Vector3(sin(ang) * tr * 1.02, 0.68, cos(ang) * tr * 1.02), Vector3(0, rad_to_deg(ang), 0))
-	# flag on the turret
-	var pole := pivot("pole", guard, Vector3(tr * 0.45, 0.6, tr * 0.45))
+	if big:
+		add_mesh("", guard, cyl(tr, tr * 1.08, 0.5, 20), mat(Color("#a69e94"), 0.95), Vector3(0, 0.25, 0))
+		add_mesh("", guard, cyl(tr * 1.12, tr * 1.12, 0.14, 20), mat(tc, 0.6), Vector3(0, 0.55, 0))
+		add_mesh("", guard, cyl(tr * 0.8, tr * 0.8, 0.05, 20), mat(Color("#2c241f"), 0.9), Vector3(0, 0.62, 0))
+		for i in 6:
+			var ang := TAU * i / 6.0
+			add_mesh("", guard, box(Vector3(0.14, 0.14, 0.12)), mat(tc_dark, 0.6), Vector3(sin(ang) * tr * 1.02, 0.68, cos(ang) * tr * 1.02), Vector3(0, rad_to_deg(ang), 0))
+	# flag: on the king's turret, on the back rim of princess towers
+	var pole := pivot("pole", guard if big else body, Vector3(tr * 0.45, 0.6, tr * 0.45) if big else Vector3(r * 0.55, top_y + 0.4, r * 0.75))
 	add_mesh("", pole, cyl(0.035, 0.035, 1.1 if big else 0.9, 8), mat(Color("#5b4a3a"), 0.8), Vector3(0, 0.5, 0))
 	add_mesh("", pole, sphere(0.07, -1, 10), mat(GOLD, 0.3, 0, 0.7), Vector3(0, 1.08 if big else 0.92, 0))
 	var flag := pivot("flag", pole, Vector3(0, 0.88 if big else 0.72, 0))
@@ -112,17 +114,43 @@ func build() -> void:
 	if big:
 		_build_cannon(guard, tr)
 	else:
-		_build_ballista(guard, tr)
+		_build_archer(guard, tc, tc_dark)
 
-func _build_ballista(guard: Node3D, tr: float) -> void:
+## Chibi archer: hooded team cape, big head and eyes, longbow in hand.
+func _build_archer(guard: Node3D, tc: Color, tc_dark: Color) -> void:
 	attack_anim_len = 0.55
 	impact_at = 0.6
-	var bow := pivot("bow", guard, Vector3(0, 0.62, -tr * 0.95))
-	add_mesh("", bow, box(Vector3(0.12, 0.1, 0.5)), mat(WOOD, 0.8), Vector3(0, 0, -0.1))
+	const SKIN := Color("#ffd2a8")
+	var a := pivot("archer", guard, Vector3.ZERO)
+	a.scale = Vector3.ONE * 1.45
+	add_mesh("", a, cyl(0.2, 0.24, 0.1, 14), mat(Color("#7b746c"), 0.95), Vector3(0, 0.05, 0))
+	add_mesh("", a, cyl(0.17, 0.27, 0.42, 14), mat(tc, 0.7), Vector3(0, 0.3, 0))          # cape / tunic
+	add_mesh("", a, torus(0.13, 0.2, 14), mat(Color("#6b4426"), 0.8), Vector3(0, 0.28, 0), Vector3.ZERO, Vector3(1, 0.6, 1))   # belt
+	add_mesh("", a, sphere(0.035, -1, 8), mat(GOLD, 0.3, 0.1, 0.7), Vector3(0, 0.28, -0.2))
+	# quiver on the back
+	add_mesh("", a, cyl(0.06, 0.06, 0.32, 10), mat(Color("#7a4a26"), 0.8), Vector3(0.08, 0.45, 0.17), Vector3(-15, 0, -20))
+	for k in 3:
+		add_mesh("", a, box(Vector3(0.05, 0.06, 0.01)), mat(Color(1, 1, 1), 0.7), Vector3(0.1 + k * 0.025 - 0.03, 0.64, 0.21), Vector3(-15, 0, -20))
+	var head := pivot("ghead", a, Vector3(0, 0.72, 0))
+	add_mesh("", head, sphere(0.25), mat(SKIN, 0.75))
+	add_mesh("", head, sphere(0.25, 0.34, 16), mat(Color("#8a4f22"), 0.8), Vector3(0, 0.1, 0.07))   # hair
+	add_mesh("", head, sphere(0.28, 0.46, 16), mat(tc_dark, 0.7), Vector3(0, 0.08, 0.14))           # hood (open at the face)
+	add_mesh("", head, cyl(0.0, 0.1, 0.22, 10), mat(tc_dark, 0.7), Vector3(0, 0.3, 0.16), Vector3(-50, 0, 0))
+	add_mesh("", head, box(Vector3(0.03, 0.22, 0.02)), mat(GOLD, 0.4, 0.1, 0.6), Vector3(0.12, 0.3, 0.12), Vector3(-40, 0, -25))   # feather
 	for sd: int in [-1, 1]:
-		add_mesh("", bow, capsule(0.03, 0.42, 8), mat(WOOD, 0.7), Vector3(0.2 * sd, 0, -0.28), Vector3(0, 0, 90 + 18 * sd))
-	add_mesh("", bow, cyl(0.006, 0.006, 0.78, 4), mat(Color(1, 1, 1), 0.5), Vector3(0, 0, -0.2), Vector3(0, 0, 90))
-	add_mesh("", bow, cyl(0.0, 0.03, 0.1, 6), mat(Color("#b9c0cc"), 0.35, 0, 0.7), Vector3(0, 0.0, -0.42), Vector3(-90, 0, 0))
+		add_eye("geye_l" if sd < 0 else "geye_r", head, Vector3(0.09 * sd, -0.01, -0.22), 0.07, Color("#3d6b2f"))
+		add_mesh("", head, sphere(0.04, -1, 8), mat(Color("#ff9e8a"), 0.9), Vector3(0.15 * sd, -0.09, -0.18), Vector3.ZERO, Vector3(1, 0.6, 0.4))
+	add_mesh("", head, sphere(0.035, -1, 10), mat(Color("#7a2030"), 0.8), Vector3(0, -0.11, -0.22), Vector3.ZERO, Vector3(1.4, 0.6, 0.5))
+	# arms + longbow held out in front
+	for sd: int in [-1, 1]:
+		add_mesh("", a, capsule(0.055, 0.26, 8), mat(tc, 0.7), Vector3(0.14 * sd, 0.42, -0.12), Vector3(70, 0, -20 * sd))
+	var bow := pivot("bow", a, Vector3(-0.16, 0.36, -0.26), Vector3(0, 35, 0))
+	for i in 7:
+		var ang := deg_to_rad(-72 + i * 24)
+		add_mesh("", bow, capsule(0.024, 0.15, 8), mat(Color("#8b5a2b"), 0.7), Vector3(sin(ang) * 0.32, cos(ang) * 0.32 - 0.32, 0) + Vector3(0, 0.32, 0), Vector3(0, 0, -rad_to_deg(ang) + 90))
+	add_mesh("", bow, cyl(0.006, 0.006, 0.6, 4), mat(Color(1, 1, 1), 0.5), Vector3(0, 0.0, 0.07))
+	add_mesh("", bow, cyl(0.012, 0.012, 0.5, 6), mat(Color("#d9c49a"), 0.7), Vector3(0, 0, -0.1), Vector3(90, 0, 0))   # arrow
+	add_mesh("", bow, cyl(0.0, 0.03, 0.08, 6), mat(Color("#b9c0cc"), 0.35, 0, 0.7), Vector3(0, 0, -0.38), Vector3(-90, 0, 0))
 
 func _build_cannon(guard: Node3D, tr: float) -> void:
 	attack_anim_len = 0.7
@@ -138,6 +166,13 @@ func get_muzzle_position() -> Vector3:
 	if parts.has("bow"):
 		return (parts["bow"] as Node3D).global_position
 	return global_position + Vector3(0, 3, 0)
+
+## Initial facing of the guard (model local yaw, degrees).
+func face_yaw(deg: float) -> void:
+	var g: Node3D = parts.get("guard")
+	if g == null:
+		return
+	_rest[g] = Transform3D(Basis(Vector3.UP, deg_to_rad(deg)), (_rest[g] as Transform3D).origin)
 
 ## Turns the guard toward a world position.
 func aim_at(world_pos: Vector3) -> void:
@@ -160,11 +195,20 @@ func pose(_dt: float) -> void:
 		scl("flame%d" % i, Vector3(2.0 - f, f, 2.0 - f))
 	if sleeping:
 		rot("barrel", Vector3(14, 0, 0))   # the king's cannon droops while he naps
+	# archer: idle sway and blinking
+	rot("archer", Vector3(0, 0, sin(t * 1.8) * 3))
+	var blink := 1.0
+	var bt := fmod(t + 0.5, 3.2)
+	if bt < 0.12:
+		blink = 1.0 - bump(bt / 0.12) * 0.9
+	scl("geye_l", Vector3(1, blink, 1))
+	scl("geye_r", Vector3(1, blink, 1))
 	var p := attack_progress()
 	if p >= 0.0:
 		if parts.has("bow"):
 			var draw := ease_out(clampf(p / impact_at, 0, 1)) if p < impact_at else 1.0 - ease_in_out((p - impact_at) / (1.0 - impact_at))
-			off("bow", Vector3(0, 0, 0.08 * draw))
+			off("bow", Vector3(0, 0, 0.1 * draw))
+			rot("ghead", Vector3(-6 * draw, 0, 0))
 		if parts.has("barrel"):
 			var rec := bump(clampf((p - impact_at) / (1.0 - impact_at), 0, 1)) if p >= impact_at else 0.0
 			off("cannon", Vector3(0, 0, 0.18 * rec))
