@@ -22,6 +22,8 @@ var cooldown := 0.5
 var model: TowerModel
 var _shot_target: Combatant
 
+const TILT_DEG := 22.0
+
 func setup(p_kind: StringName, p_team: int, p_lane: int, p_level: int, p_battle: Node) -> void:
 	kind = p_kind
 	team = p_team
@@ -49,6 +51,9 @@ func _ready() -> void:
 	add_child(model)
 	# models are built facing -Z; rotate so banners and guards face the camera
 	model.rotation.y = PI
+	# lean slightly toward the high camera so walls, banner and torches read
+	# like the painted arena (purely visual)
+	model.rotation.x = deg_to_rad(TILT_DEG)
 	model.impact.connect(_on_impact)
 
 func activate() -> void:
