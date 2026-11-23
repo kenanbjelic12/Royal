@@ -17,7 +17,7 @@ const CLIPS := {
 
 func _ready() -> void:
 	var ids := ["fire_knight", "shadow_assassin", "stone_golem", "frost_dragon", "poison_witch",
-		"thunder_mage", "healing_fairy", "goblin_gang", "viking_berserker", "bomb_pirate"]
+		"thunder_mage", "healing_fairy", "goblin_gang", "viking_berserker", "bomb_pirate", "skeleton_squad"]
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("ids="):
 			ids = Array(a.substr(4).split(","))

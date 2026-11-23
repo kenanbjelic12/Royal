@@ -93,6 +93,12 @@ MONSTERS = {
                   "white shirt, blue pants, peg leg, belt full of round black bombs, holding a lit cartoon bomb",
         "texture": "red bandana, red and white striped shirt, navy pants, black bombs with orange fuses, gold tooth",
         "height": 1.25, "rig": True},
+    "skeleton_squad": {
+        "prompt": "tiny cute cartoon skeleton warrior, friendly not scary, big round skull with large glowing blue eyes "
+                  "in the eye sockets, happy toothy grin, small chubby bones, little dented iron helmet, tiny round wooden "
+                  "shield and a short rusty sword, kids game mascot",
+        "texture": "clean ivory white bones, glowing cyan eyes, dented grey iron helmet, brown wooden shield with a blue rim",
+        "height": 0.85, "rig": True},
 }
 
 

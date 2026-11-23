@@ -15,6 +15,7 @@ const SHOTS := {
 	&"goblin_gang": {"pose": "walk", "time": 0.45, "cam": Vector3(-0.8, 1.0, -2.5), "look": Vector3(0, 0.55, 0), "fov": 35.0},
 	&"viking_berserker": {"pose": "walk", "time": 0.45, "cam": Vector3(-1.2, 1.5, -3.6), "look": Vector3(0, 0.9, 0), "fov": 35.0},
 	&"bomb_pirate": {"pose": "idle", "time": 0.5, "cam": Vector3(-1.1, 1.4, -3.4), "look": Vector3(0, 0.8, 0), "fov": 35.0},
+	&"skeleton_squad": {"pose": "walk", "time": 0.45, "cam": Vector3(-0.8, 0.95, -2.4), "look": Vector3(0, 0.5, 0), "fov": 35.0},
 	&"poison_witch": {"pose": "select", "time": 0.45, "cam": Vector3(-1.2, 1.6, -3.7), "look": Vector3(0, 1.05, 0), "fov": 36.0},
 }
 

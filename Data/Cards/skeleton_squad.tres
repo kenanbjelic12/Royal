@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/MonsterData.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+id = &"skeleton_squad"
+display_name = "Skeleton Squad"
+role = "Swarm"
+description = "Five tiny, rattling skeletons. Each one is fragile, but together they surround and distract anything."
+rarity = 0
+elixir_cost = 3
+accent_color = Color(0.55, 0.85, 1, 1)
+max_hp = 95.0
+damage = 60.0
+attack_speed = 1.0
+attack_range = 0.6
+sight_range = 5.5
+move_speed = 1.9
+target_type = 0
+can_hit_air = false
+is_flying = false
+splash_radius = 0
+projectile = 0
+projectile_speed = 9
+radius = 0.3
+mass = 0.45
+model_scale = 1.0
+model_glb_path = "res://Assets/Monsters/skeleton_squad/skeleton_squad_rigged.glb"
+sfx_attack = &"bone_slash"
+spawn_count = 5
+spawn_spread = 0.85

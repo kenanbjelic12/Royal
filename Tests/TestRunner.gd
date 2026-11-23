@@ -59,14 +59,14 @@ func _run_all() -> void:
 func test_cards_display() -> void:
 	current = "1. Cards display"
 	var deck := CardDatabase.deck()
-	check("10 cards loaded from data files", deck.size() == 10, "got %d" % deck.size())
+	check("11 cards loaded from data files", deck.size() == 11, "got %d" % deck.size())
 	var ids := deck.map(func(d): return String(d.id))
-	check("expected card ids", ids.slice(0, 5) == ["fire_knight", "shadow_assassin", "stone_golem", "frost_dragon", "poison_witch"] and ids.has("thunder_mage") and ids.has("healing_fairy") and ids.has("goblin_gang") and ids.has("viking_berserker") and ids.has("bomb_pirate"), str(ids))
+	check("expected card ids", ids.slice(0, 5) == ["fire_knight", "shadow_assassin", "stone_golem", "frost_dragon", "poison_witch"] and ids.has("thunder_mage") and ids.has("healing_fairy") and ids.has("goblin_gang") and ids.has("viking_berserker") and ids.has("bomb_pirate") and ids.has("skeleton_squad"), str(ids))
 	check("battle deck has 8 cards", CardDatabase.battle_deck().size() == 8)
 	for d: MonsterData in deck:
 		check("%s has portrait illustration" % d.id, d.portrait != null)
 	var costs := deck.map(func(d): return d.elixir_cost)
-	check("elixir costs 5/3/6/4/4/5/4/2/4/3", costs == [5, 3, 6, 4, 4, 5, 4, 2, 4, 3], str(costs))
+	check("elixir costs 5/3/6/4/4/5/4/2/4/3/3", costs == [5, 3, 6, 4, 4, 5, 4, 2, 4, 3, 3], str(costs))
 	await new_battle(false, false, true)
 	var hud: UIManager = battle.hud
 	check("HUD shows 5 card widgets", hud.cards.size() == 5)
@@ -322,7 +322,7 @@ func test_ai_uses_cards() -> void:
 	var defenders := battle.get_units(1)
 	var close := defenders.filter(func(d): return d.position.x > 0.0)
 	check("AI places defenders in the threatened lane", close.size() > 0)
-	check("AI counter can hit the threat", defenders.all(func(d): return d.data.target_type == MonsterData.TargetType.ANY))
+	check("AI counter can hit the threat", defenders.filter(func(d): return d.data.target_type != MonsterData.TargetType.HEAL_ALLIES).all(func(d): return d.data.target_type == MonsterData.TargetType.ANY))
 	var dragon_threat := CardDatabase.get_card(&"frost_dragon")
 	var knight := CardDatabase.get_card(&"fire_knight")
 	var witch := CardDatabase.get_card(&"poison_witch")

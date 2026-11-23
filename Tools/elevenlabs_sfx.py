@@ -104,6 +104,13 @@ SOUNDS = {
     "bomb_pirate_attack_1": ("pirate playful 'catch!' throwing a bomb with fuse hiss, " + CARTOON, 0.7),
     "bomb_pirate_death": ("pirate 'blimey!' and comical fall, " + CARTOON, 1.0),
     "bomb_pirate_select": ("pirate cheerful 'arrr!' and juggling bombs, " + CARTOON, 1.3),
+    # --- Skeleton Squad
+    "skeleton_squad_deploy_1": ("group of tiny cartoon skeletons rattling bones and giggling 'nyeh heh heh!', " + CARTOON, 1.4),
+    "skeleton_squad_deploy_2": ("tiny skeletons cheer 'Bones, assemble!' with clattering bones, " + CARTOON, 1.4),
+    "skeleton_squad_attack_1": ("tiny skeleton squeaky 'hya!' with bone clatter, " + CARTOON, 0.5),
+    "skeleton_squad_death": ("small skeleton collapses into a pile of rattling bones, cartoon", 0.8),
+    "skeleton_squad_select": ("tiny skeleton dancing with bones clacking like a xylophone, " + CARTOON, 1.3),
+    "bone_slash": ("small rusty sword slash with bone rattle, game sound", 0.5),
     # --- new mechanic sounds
     "lightning_zap": ("magic lightning bolt zap, electric crackle, game sound", 0.6),
     "lightning_hit": ("electric shock impact with crackling arcs, game sound", 0.6),

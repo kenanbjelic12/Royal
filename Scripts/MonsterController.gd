@@ -249,6 +249,8 @@ func _die() -> void:
 	if not AudioManager.play_voice(String(data.id) + "_death"):
 		AudioManager.play(&"death")
 	VFX.death_poof(battle.effects_root(), aim_point())
+	if data.id == &"skeleton_squad":
+		VFX.debris(battle.effects_root(), ground_pos(), Color("#f1ead8"), 6, 3.0)
 	if _ring:
 		_ring.visible = false
 	if _status_fx:

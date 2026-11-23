@@ -19,6 +19,7 @@ const SETUP := {
 	&"goblin_gang": {"height": 0.95, "impact": 0.45, "attack_len": 0.55, "run": true},
 	&"viking_berserker": {"height": 1.5, "impact": 0.55, "attack_len": 0.9},
 	&"bomb_pirate": {"height": 1.4, "impact": 0.6, "attack_len": 0.9},
+	&"skeleton_squad": {"height": 0.9, "impact": 0.45, "attack_len": 0.55, "run": true},
 }
 
 var glb_path := ""
@@ -171,6 +172,16 @@ func _add_weapons() -> void:
 				add_mesh("", w, sphere(0.12, -1, 12), mat(Color("#1d1d24"), 0.3, 0, 0.3), Vector3(0, 0.1, 0.02))
 				var fuse := pivot("orb", w, Vector3(0, 0.25, 0.02))
 				add_particles("fuse", fuse, Color(1.0, 0.7, 0.2), 10, 0.3, 0.06, Vector3(0, 0.8, 0), 60.0, 0.02)
+		&"skeleton_squad":
+			var w := _hand(&"RightHand")
+			if w:
+				add_mesh("", w, cyl(0.02, 0.02, 0.1, 6), mat(Color("#5a3a20"), 0.8), Vector3(0, 0.02, 0))
+				add_mesh("", w, box(Vector3(0.14, 0.03, 0.04)), mat(Color("#8a8f99"), 0.4, 0, 0.6), Vector3(0, 0.08, 0))
+				add_mesh("", w, box(Vector3(0.06, 0.38, 0.02)), mat(Color("#b9c3d1"), 0.3, 0, 0.7), Vector3(0, 0.28, 0))
+			var sh := _hand(&"LeftHand")
+			if sh:
+				add_mesh("", sh, cyl(0.13, 0.13, 0.03, 14), mat(Color("#7a5230"), 0.8), Vector3(0.05, 0.05, 0), Vector3(0, 0, 90))
+				add_mesh("", sh, torus(0.11, 0.14, 14), mat(Color("#3d8bff"), 0.5), Vector3(0.06, 0.05, 0), Vector3(0, 0, 90))
 		&"frost_dragon":
 			add_particles("frost", parts["glb"], Color(0.7, 0.95, 1.0), 10, 1.0, 0.1, Vector3(0, -0.6, 0), 60.0, 0.3)
 		&"stone_golem":

@@ -6,7 +6,7 @@ const CARD_DIR := "res://Data/Cards/"
 const PORTRAIT_DIR := "res://Assets/Cards/"
 ## Display order of the test deck.
 const DECK_ORDER: Array[StringName] = [&"fire_knight", &"shadow_assassin", &"stone_golem", &"frost_dragon", &"poison_witch",
-	&"thunder_mage", &"healing_fairy", &"goblin_gang", &"viking_berserker", &"bomb_pirate"]
+	&"thunder_mage", &"healing_fairy", &"goblin_gang", &"viking_berserker", &"bomb_pirate", &"skeleton_squad"]
 const DECK_SIZE := 8
 const DEFAULT_DECK: Array[StringName] = [&"fire_knight", &"shadow_assassin", &"stone_golem", &"frost_dragon", &"poison_witch",
 	&"thunder_mage", &"goblin_gang", &"bomb_pirate"]
