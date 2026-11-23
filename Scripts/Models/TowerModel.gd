@@ -224,14 +224,14 @@ func show_destroyed() -> void:
 	_rubble = Node3D.new()
 	_root.add_child(_rubble)
 	var r := 1.35 if kind == &"king" else 1.0
-	add_mesh("", _rubble, cyl(r * 1.18, r * 1.28, 0.35, 28), mat(STONE_DARK, 0.95), Vector3(0, 0.17, 0))
-	add_mesh("", _rubble, cyl(r * 0.9, r * 1.05, 0.6, 12), mat(STONE, 0.95), Vector3(0, 0.6, 0), Vector3(4, 0, -6))
+	add_mesh("", _rubble, cyl(r * 1.18, r * 1.28, 0.35, 28), mat(Color("#5f5952"), 0.95), Vector3(0, 0.17, 0))
+	add_mesh("", _rubble, cyl(r * 0.9, r * 1.05, 0.6, 12), mat(Color("#7b746c"), 0.95), Vector3(0, 0.6, 0), Vector3(4, 0, -6))
 	var rng := RandomNumberGenerator.new()
 	rng.seed = int(r * 1000)
 	for i in 9:
 		var a := rng.randf() * TAU
 		var d := rng.randf_range(0.2, r * 1.2)
-		add_mesh("", _rubble, sphere(rng.randf_range(0.15, 0.35), -1, 10), mat(STONE if i % 2 else STONE_DARK, 0.95), Vector3(sin(a) * d, rng.randf_range(0.6, 1.0), cos(a) * d), Vector3(rng.randf() * 90, 0, 0), Vector3(1, 0.7, 1.2))
+		add_mesh("", _rubble, sphere(rng.randf_range(0.15, 0.35), -1, 10), mat(Color("#857e76") if i % 2 else Color("#5f5952"), 0.95), Vector3(sin(a) * d, rng.randf_range(0.6, 1.0), cos(a) * d), Vector3(rng.randf() * 90, 0, 0), Vector3(1, 0.7, 1.2))
 	(parts["pole"] as Node3D).visible = true
 	(parts["pole"] as Node3D).rotation_degrees = Vector3(0, 0, 50)
 	(parts["pole"] as Node3D).position = Vector3(r * 0.4, 0.8, r * 0.4)

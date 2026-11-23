@@ -576,31 +576,105 @@ func _on_phase(p: StringName) -> void:
 func _on_finished(r: Dictionary) -> void:
 	battle.card_manager.deselect()
 	_hide_preview()
-	var overlay := ColorRect.new()
-	overlay.color = Color(0, 0, 0, 0.0)
-	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
-	root.add_child(overlay)
+	if _pause_layer != null:
+		_pause_layer.queue_free()
+		_pause_layer = null
+	get_tree().paused = false
 	var won: bool = r.get("won", false)
 	var draw: bool = r.get("draw", false)
-	var title := "VICTORY!" if won else ("DRAW" if draw else "DEFEAT")
-	var col := Color("#ffd84a") if won else (Color("#d9e2ff") if draw else Color("#ff6b6b"))
-	var tw := create_tween()
-	tw.tween_property(overlay, "color:a", 0.45, 0.6)
-	_banner.text = title
-	_banner.add_theme_color_override("font_color", col)
-	_banner.add_theme_font_size_override("font_size", 84)
-	_banner.pivot_offset = _banner.size * 0.5
-	_banner.scale = Vector2(0.3, 0.3)
-	_banner.modulate.a = 1.0
-	root.move_child(_banner, -1)
-	var tw2 := create_tween()
-	tw2.tween_property(_banner, "scale", Vector2.ONE, 0.5).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
-	var btn := UIStyle.button("Continue", UIStyle.BLUE if won else UIStyle.GOLD, 32, Vector2(260, 84))
-	btn.set_anchors_preset(Control.PRESET_CENTER)
-	var vp := root.get_viewport_rect().size
-	btn.position = Vector2(vp.x * 0.5 - 130, vp.y * 0.56)
-	btn.modulate.a = 0.0
-	btn.pressed.connect(GameManager.goto_result)
-	root.add_child(btn)
-	create_tween().tween_property(btn, "modulate:a", 1.0, 0.3).set_delay(1.2)
+	# own layer on top of everything, anchored to the screen so it always shows
+	var layer := CanvasLayer.new()
+	layer.name = "ResultLayer"
+	layer.layer = 50
+	layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(layer)
+	var full := Control.new()
+	full.set_anchors_preset(Control.PRESET_FULL_RECT)
+	full.mouse_filter = Control.MOUSE_FILTER_STOP
+	layer.add_child(full)
+	var dim := ColorRect.new()
+	dim.color = Color(0.03, 0.05, 0.12, 0.0)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	full.add_child(dim)
+	create_tween().tween_property(dim, "color:a", 0.62, 0.6)
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	full.add_child(center)
+	var accent := UIStyle.GOLD if won else (Color("#9fb3e8") if draw else UIStyle.RED)
+	var panel := UIStyle.make_panel(UIStyle.NAVY_LIGHT, 28, accent, 6)
+	panel.name = "ResultPanel"
+	panel.custom_minimum_size = Vector2(600, 0)
+	center.add_child(panel)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 18)
+	panel.add_child(col)
+	var title := UIStyle.label("VICTORY!" if won else ("DRAW" if draw else "DEFEAT"), 76, accent, 12)
+	title.name = "ResultTitle"
+	col.add_child(title)
+	var why := {"king": "King Tower destroyed", "time": "More crowns when time ran out",
+		"tiebreak": "Tiebreaker: lowest tower health", "overtime": "Overtime crown", "draw": "Same crowns", "forced": ""}
+	var sub := UIStyle.label(String(why.get(r.get("reason", ""), "")), 24, Color("#c9d4ff"), 5)
+	col.add_child(sub)
+	col.add_child(_result_row(EconomyManager.player_name + " (You)", int(r.get("crowns_player", 0)), 0, won, draw))
+	col.add_child(_result_row("Rival Bot", int(r.get("crowns_enemy", 0)), 1, not won and not draw, draw))
+	# rewards
+	var rw := HBoxContainer.new()
+	rw.alignment = BoxContainer.ALIGNMENT_CENTER
+	rw.add_theme_constant_override("separation", 26)
+	col.add_child(rw)
+	for item: Array in [[&"trophy", "%+d" % int(r.get("trophies", 0))], [&"gold", "+%d" % int(r.get("gold", 0))], [&"xp", "+%d XP" % int(r.get("xp", 0))]]:
+		var h := HBoxContainer.new()
+		h.add_theme_constant_override("separation", 6)
+		var ic := UIIcon.new()
+		ic.kind = item[0]
+		ic.custom_minimum_size = Vector2(40, 40)
+		h.add_child(ic)
+		h.add_child(UIStyle.label(item[1], 30, Color.WHITE, 6))
+		rw.add_child(h)
+	if String(r.get("chest", "")) != "":
+		col.add_child(UIStyle.label("Chest earned!", 26, UIStyle.GOLD, 6))
+	var btns := HBoxContainer.new()
+	btns.alignment = BoxContainer.ALIGNMENT_CENTER
+	btns.add_theme_constant_override("separation", 20)
+	col.add_child(btns)
+	var menu_btn := UIStyle.button("Main Menu", UIStyle.BLUE, 30, Vector2(250, 88))
+	menu_btn.name = "MainMenuButton"
+	menu_btn.pressed.connect(func():
+		AudioManager.play(&"button")
+		GameManager.goto_menu())
+	btns.add_child(menu_btn)
+	var again := UIStyle.button("Play Again", UIStyle.GOLD, 30, Vector2(250, 88))
+	again.name = "PlayAgainButton"
+	again.pressed.connect(func():
+		AudioManager.play(&"button")
+		GameManager.goto_battle())
+	btns.add_child(again)
+	# pop in after the final blow has played out
+	panel.modulate.a = 0.0
+	panel.pivot_offset = Vector2(300, 260)
+	panel.scale = Vector2(0.6, 0.6)
+	var tw := create_tween().set_parallel(true)
+	tw.tween_property(panel, "modulate:a", 1.0, 0.35).set_delay(0.9)
+	tw.tween_property(panel, "scale", Vector2.ONE, 0.55).set_delay(0.9).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+func _result_row(who: String, crowns: int, team: int, winner: bool, draw: bool) -> Control:
+	var row := UIStyle.make_panel(Color("#1b2a4d"), 18, (UIStyle.BLUE if team == 0 else UIStyle.RED), 4)
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 12)
+	row.add_child(h)
+	var name_l := UIStyle.label(who, 30, Color("#8fc3ff") if team == 0 else Color("#ff9b9b"), 6, HORIZONTAL_ALIGNMENT_LEFT)
+	name_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_l.clip_text = true
+	h.add_child(name_l)
+	for i in 3:
+		var ic := UIIcon.new()
+		ic.kind = (&"crown_blue" if team == 0 else &"crown_red") if i < crowns else &"crown_gray"
+		ic.custom_minimum_size = Vector2(38, 38)
+		h.add_child(ic)
+	var tag := UIStyle.label("DRAW" if draw else ("WINNER" if winner else "LOSER"), 26,
+		Color("#d9e2ff") if draw else (UIStyle.GOLD if winner else Color("#9aa3b8")), 6)
+	tag.custom_minimum_size = Vector2(130, 0)
+	h.add_child(tag)
+	return row

@@ -356,6 +356,17 @@ func test_win_lose() -> void:
 	battle.king_tower(0).take_damage(999999)
 	check("losing own king = defeat", battle.finished and not battle.result.won and not battle.result.draw)
 	check("defeat removes trophies", EconomyManager.trophies == tro + GameManager.WIN_TROPHIES - GameManager.LOSS_TROPHIES)
+	# end-of-match menu: winner / loser and a way back to the main menu
+	await new_battle(false, false, true)
+	battle.king_tower(0).take_damage(999999)
+	await sim(0.2)
+	var panel := battle.find_child("ResultPanel", true, false)
+	check("result menu appears after the match", panel != null and (panel as Control).is_visible_in_tree())
+	var title: Label = battle.find_child("ResultTitle", true, false)
+	check("result menu names the loser", title != null and title.text == "DEFEAT")
+	var mb: Button = battle.find_child("MainMenuButton", true, false)
+	check("result menu has a Main Menu button", mb != null and mb.pressed.get_connections().size() > 0)
+	check("result menu has a Play Again button", battle.find_child("PlayAgainButton", true, false) != null)
 	# time out with more crowns
 	await new_battle()
 	battle.get_towers(1)[0].take_damage(999999)
