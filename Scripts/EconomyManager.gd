@@ -15,12 +15,13 @@ const XP_PER_LEVEL := [0, 20, 50, 100, 200, 400, 800, 1600, 3200, 6400]
 
 ## Chest types: unlock time in seconds (shortened for the test build).
 const CHESTS := {
-	"wooden": {"name": "Wooden Chest", "unlock": 15, "gold": [20, 40], "cards": 6, "gems_open": 2},
-	"silver": {"name": "Silver Chest", "unlock": 60, "gold": [50, 90], "cards": 15, "gems_open": 6},
-	"golden": {"name": "Golden Chest", "unlock": 180, "gold": [150, 260], "cards": 40, "gems_open": 18},
-	"magic": {"name": "Magical Chest", "unlock": 300, "gold": [400, 600], "cards": 90, "gems_open": 40},
+	"gold": {"name": "Gold Chest", "unlock": 15, "gold": [30, 60], "cards": 8, "gems_open": 3},
+	"rare": {"name": "Rare Chest", "unlock": 90, "gold": [100, 180], "cards": 25, "gems_open": 12},
+	"epic": {"name": "Epic Chest", "unlock": 240, "gold": [350, 550], "cards": 70, "gems_open": 35},
 }
-const CHEST_CYCLE := ["wooden", "silver", "wooden", "silver", "golden", "wooden", "silver", "silver", "magic"]
+const CHEST_CYCLE := ["gold", "gold", "rare", "gold", "gold", "rare", "gold", "rare", "epic"]
+## Saves from older builds used other chest names.
+const OLD_CHEST_TYPES := {"wooden": "gold", "silver": "gold", "golden": "rare", "magic": "epic"}
 
 var persist := true
 var player_name := "Player"
@@ -60,6 +61,10 @@ func load_game() -> void:
 		card_levels = cfg.get_value("cards", "levels", {})
 		card_copies = cfg.get_value("cards", "copies", {})
 		chests = cfg.get_value("chests", "slots", [])
+		for c in chests:
+			c.type = OLD_CHEST_TYPES.get(c.type, c.type)
+			if not CHESTS.has(c.type):
+				c.type = "gold"
 		chest_cycle_index = cfg.get_value("chests", "cycle", 0)
 		quests = cfg.get_value("quests", "state", {})
 		shop_day = cfg.get_value("shop", "day", "")

@@ -83,7 +83,7 @@ func _build() -> void:
 	_section("Special Offers", "Limited bundles")
 	row = _row()
 	var specials := [
-		{"id": "special_starter", "title": "Royal Starter", "desc": "Golden Chest\n+1000 gold", "gems": 120, "chest": "golden", "gold": 1000},
+		{"id": "special_starter", "title": "Royal Starter", "desc": "Epic Chest\n+1000 gold", "gems": 120, "chest": "epic", "gold": 1000},
 		{"id": "special_legend", "title": "Dragon Hoard", "desc": "Frost Dragon x4\n+500 gold", "gems": 90, "card": &"frost_dragon", "n": 4, "gold": 500},
 	]
 	for sp in specials:
@@ -106,7 +106,7 @@ func _build() -> void:
 
 	_section("Chests", "Open instantly")
 	row = _row()
-	for ch in [["silver", 30], ["golden", 80], ["magic", 200]]:
+	for ch in [["gold", 20], ["rare", 60], ["epic", 160]]:
 		var offer := _offer_box(row, EconomyManager.CHESTS[ch[0]].name)
 		var ic := UIIcon.new()
 		ic.kind = &"chest"

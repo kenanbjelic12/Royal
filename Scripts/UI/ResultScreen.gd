@@ -16,7 +16,7 @@ func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	r = GameManager.last_result
 	if r.is_empty():
-		r = {"won": victory, "crowns_player": 3 if victory else 0, "crowns_enemy": 0 if victory else 3, "trophies": 30 if victory else -20, "gold": 100 if victory else 0, "chest": "silver" if victory else ""}
+		r = {"won": victory, "crowns_player": 3 if victory else 0, "crowns_enemy": 0 if victory else 3, "trophies": 30 if victory else -20, "gold": 100 if victory else 0, "chest": "rare" if victory else ""}
 	var top := Color("#ffb52e") if victory else Color("#4a5a7a")
 	var bottom := Color("#7a2a8a") if victory else Color("#141a2a")
 	var bg := UIStyle.gradient_rect(top, bottom)

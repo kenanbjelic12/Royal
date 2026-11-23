@@ -452,5 +452,17 @@
         "running_armature_glb_url": "https://assets.meshy.ai/9cfba3d4-eb86-4d67-aff9-bbc035d44f4f/tasks/01a2099f-7f38-741d-9609-ffd140b8af0b/output/Animation_Running_withSkin_armature.glb?Expires=1795716996&Signature=cS-VE6R-C79wa8FqZFJpmPW6RiZSiaruqgm0ifxQcZ3iDIU4dq6Dr~oAT~wey-7hcw-1USgwCxJuXYKUCVbmNGj~3IGcYSianxC~zLeAsWv6S29dpvBJ-aefHYoBLtrtef6asDLVUzLIgWmo5B0gkYuacCn~MOZ7hHWV7DNAFssUIA6AQlyXgDW87OftydcQj6iaiWrB-jUI1gnMg76HzCK~qL8HYuDFOLuruWmbYbpWEGd2G~D6U-arKIpaJujXkxYIqxQTJW~rr5XXFkM6nKN9Ygds0YQFLZ9N6IgcZ83-b9VsAWgz3g1pfm39lgqQpV1fFx7VXftFPu5J4liaZA__&Key-Pair-Id=K1VGYTHIYLM9UM"
       }
     }
+  },
+  "gold_chest": {
+    "preview": "01a20a2d-b7cb-7398-ad1d-b8e898f76d80",
+    "refine": "01a20a2e-f92a-77d7-bcbf-3bfa4abf6bd2"
+  },
+  "rare_chest": {
+    "preview": "01a20a2d-d406-7176-b740-728d7c8d1631",
+    "refine": "01a20a2f-0491-7750-89dc-b9a52cbc348d"
+  },
+  "epic_chest": {
+    "preview": "01a20a2d-de2e-774b-b02e-aee771c2f986",
+    "refine": "01a20a2f-178b-71ef-9c2b-504e6ce7bc66"
   }
 }

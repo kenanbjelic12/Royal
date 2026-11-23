@@ -256,12 +256,25 @@ func _refresh_chests() -> void:
 		var t2: Label = slot.find_child("Status", true, false)
 		if i >= EconomyManager.chests.size():
 			ic.visible = false
+			var old: Node = slot.find_child("View3D", true, false)
+			if old:
+				old.queue_free()
 			t1.text = "Empty slot"
 			t2.text = "Win to earn"
 			t2.add_theme_color_override("font_color", Color("#8fa0c8"))
 			continue
 		var c: Dictionary = EconomyManager.chests[i]
-		ic.visible = true
+		var view: ChestView = slot.find_child("View3D", true, false)
+		if view != null and view.type != c.type:
+			view.queue_free()
+			view = null
+		if view == null and ChestView.available(c.type):
+			view = ChestView.make(c.type, false)
+			view.name = "View3D"
+			view.custom_minimum_size = Vector2(0, 74)
+			ic.get_parent().add_child(view)
+			ic.get_parent().move_child(view, ic.get_index())
+		ic.visible = view == null
 		ic.tint = ChestPopup.CHEST_COLORS.get(c.type, Color.WHITE)
 		t1.text = EconomyManager.CHESTS[c.type].name
 		if EconomyManager.chest_ready(i):
@@ -362,7 +375,7 @@ func run_self_test() -> bool:
 	ok = ok and is_instance_valid(p) and p.content.get_child_count() == EconomyManager.QUEST_DEFS.size()
 	p.close()
 	# chest flow: start unlock, then pay gems to open
-	EconomyManager.chests = [{"type": "wooden", "unlock_at": -1}]
+	EconomyManager.chests = [{"type": "gold", "unlock_at": -1}]
 	EconomyManager.gems = 100
 	_refresh()
 	_on_chest(0)

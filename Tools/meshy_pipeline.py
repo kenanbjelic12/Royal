@@ -101,6 +101,30 @@ MONSTERS = {
         "height": 0.85, "rig": True},
 }
 
+# Reward chests: static props (no rig). The lid is split off in Godot
+# (Tools/ChestImport.gd) and animated there, since Meshy animations need a
+# humanoid rig.
+PROP_STYLE = ("stylized 3D mobile game prop, cartoon, chunky rounded shapes, bright saturated colours, "
+              "clean hand-painted look, premium collectible game quality, single object, closed lid, front view")
+CHESTS = {
+    "gold_chest": {
+        "prompt": "cartoon treasure chest, warm brown wooden planks with thick shiny gold metal bands and gold corner "
+                  "caps, rounded domed lid, big golden front lock plate with a keyhole and a small crown emblem",
+        "texture": "warm brown wood planks, polished shiny gold bands and corners, gold lock with crown",
+        "height": 1.0, "rig": False},
+    "rare_chest": {
+        "prompt": "cartoon rare treasure chest, royal blue painted wood with polished silver metal bands and corner "
+                  "caps, rounded domed lid, glowing cyan diamond gem set in a silver front lock plate",
+        "texture": "deep royal blue painted wood, polished silver bands and rivets, glowing cyan gem in the lock",
+        "height": 1.0, "rig": False},
+    "epic_chest": {
+        "prompt": "cartoon epic treasure chest, deep purple magical wood with ornate gold filigree trims, glowing "
+                  "magenta crystals on the four corners, rounded domed lid, big golden crown emblem lock plate",
+        "texture": "deep violet wood, ornate shiny gold trims, glowing pink magenta crystals, golden crown lock",
+        "height": 1.0, "rig": False},
+}
+MONSTERS.update(CHESTS)
+
 
 def req(method, path, body=None):
     data = json.dumps(body).encode() if body is not None else None
@@ -127,7 +151,7 @@ def save(s):
 
 
 def ids(args):
-    return args or list(MONSTERS)
+    return args or [k for k in MONSTERS if k not in CHESTS]
 
 
 def task_path(stage):
@@ -143,7 +167,7 @@ def cmd_preview(args):
             print(mid, "preview exists", st["preview"])
             continue
         r = req("POST", "/v2/text-to-3d", {
-            "mode": "preview", "prompt": m["prompt"] + ", " + STYLE, "art_style": "realistic",
+            "mode": "preview", "prompt": m["prompt"] + ", " + (STYLE if m["rig"] else PROP_STYLE), "art_style": "realistic",
             "ai_model": "latest", "topology": "triangle", "target_polycount": 15000,
             "should_remesh": True, "symmetry_mode": "auto", "pose_mode": "a-pose" if m["rig"] else ""})
         st["preview"] = r.get("result") or r.get("id")
@@ -233,7 +257,7 @@ def cmd_download(args):
     s = load()
     for mid in ids(args):
         st = s.get(mid, {})
-        out = os.path.join(ROOT, "Assets", "Monsters", mid)
+        out = os.path.join(ROOT, "Assets", "Chests" if mid in CHESTS else "Monsters", mid)
         if st.get("refine"):
             t = get_task("refine", st["refine"])
             if t.get("status") == "SUCCEEDED":
