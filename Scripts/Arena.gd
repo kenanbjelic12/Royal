@@ -11,7 +11,7 @@ const PATH := Color("#e3c98d")
 const STONE := Color("#cfc2ad")
 const STONE_DARK := Color("#9c8c78")
 
-var deploy_overlay: MeshInstance3D
+var deploy_overlay: Node3D
 var _overlay_mat: StandardMaterial3D
 var _pocket_overlays: Dictionary = {}
 var _rng := RandomNumberGenerator.new()
@@ -455,39 +455,41 @@ func _mushroom(p: Vector3) -> void:
 
 # ------------------------------------------------------------------ deploy overlay
 func _build_deploy_overlay() -> void:
+	# red "can't deploy" area, built per lane in three strips so a lane's
+	# pocket can be cleared (looks like your own side) once its enemy
+	# princess tower falls
 	_overlay_mat = StandardMaterial3D.new()
 	_overlay_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_overlay_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	_overlay_mat.albedo_color = Color(1.0, 0.1, 0.1, 0.38)
-	deploy_overlay = MeshInstance3D.new()
-	var pm := PlaneMesh.new()
-	var len := ArenaLayout.HALF_L + ArenaLayout.DEPLOY_MIN_Z
-	pm.size = Vector2(ArenaLayout.HALF_W * 2, len)
-	deploy_overlay.mesh = pm
-	deploy_overlay.material_override = _overlay_mat
-	deploy_overlay.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	deploy_overlay.position = Vector3(0, 0.05, -ArenaLayout.HALF_L + len * 0.5)
+	deploy_overlay = Node3D.new()
 	deploy_overlay.visible = false
 	add_child(deploy_overlay)
+	var pocket_far := -(ArenaLayout.PRINCESS_Z - 4.0)
+	var pocket_near := -(ArenaLayout.RIVER_HALF + 0.2)
+	var strips := {
+		"far": [-ArenaLayout.HALF_L, pocket_far],
+		"pocket": [pocket_far, pocket_near],
+		"near": [pocket_near, ArenaLayout.DEPLOY_MIN_Z],
+	}
+	for lane in [-1, 1]:
+		for key: String in strips:
+			var z0: float = strips[key][0]
+			var z1: float = strips[key][1]
+			var mi := MeshInstance3D.new()
+			var pm := PlaneMesh.new()
+			pm.size = Vector2(ArenaLayout.HALF_W, z1 - z0)
+			mi.mesh = pm
+			mi.material_override = _overlay_mat
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			mi.position = Vector3(lane * ArenaLayout.HALF_W * 0.5, 0.05, (z0 + z1) * 0.5)
+			deploy_overlay.add_child(mi)
+			if key == "pocket":
+				_pocket_overlays[lane] = mi
 
-## Shows the red "can't deploy here" area for the player (team 0).
+## Shows the red "can't deploy here" area for the player (team 0). An open
+## lane's pocket is left uncovered, so it reads exactly like your own half.
 func show_deploy_overlay(v: bool, enemy_lane_open: Dictionary = {}) -> void:
 	deploy_overlay.visible = v
 	for lane in [-1, 1]:
-		var open: bool = enemy_lane_open.get(lane, false)
-		if v and open and not _pocket_overlays.has(lane):
-			var mi := MeshInstance3D.new()
-			var pm := PlaneMesh.new()
-			var pocket_len := ArenaLayout.PRINCESS_Z - 4.0 - ArenaLayout.RIVER_HALF - 0.2
-			pm.size = Vector2(ArenaLayout.HALF_W, pocket_len)
-			mi.mesh = pm
-			var m := StandardMaterial3D.new()
-			m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-			m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-			m.albedo_color = Color(0.3, 1.0, 0.4, 0.25)
-			mi.material_override = m
-			mi.position = Vector3(lane * ArenaLayout.HALF_W * 0.5, 0.06, -(ArenaLayout.RIVER_HALF + 0.2 + pocket_len * 0.5))
-			add_child(mi)
-			_pocket_overlays[lane] = mi
-		if _pocket_overlays.has(lane):
-			(_pocket_overlays[lane] as Node3D).visible = v and open
+		(_pocket_overlays[lane] as Node3D).visible = not enemy_lane_open.get(lane, false)

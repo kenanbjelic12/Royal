@@ -19,6 +19,16 @@ func _run() -> void:
 	await get_tree().create_timer(3.0).timeout
 	battle = battle.get_node(".") if battle.has_method("get_towers") else battle.find_children("*", "", true, false).filter(func(n): return n.has_method("get_towers"))[0]
 	print("scene: ", battle.name)
+	if OS.get_cmdline_user_args().has("pocket"):
+		for t in battle.get_towers(1):
+			if t.kind == &"princess" and t.lane == -1:
+				t.take_damage(99999.0)
+		await get_tree().create_timer(2.5).timeout
+		battle.card_manager.select(0)
+		await get_tree().create_timer(0.5).timeout
+		get_viewport().get_texture().get_image().save_png(out + "/pocket.png")
+		get_tree().quit()
+		return
 	for t in battle.get_towers(0 if lose else 1):
 		if t.kind == &"king":
 			t.take_damage(99999.0)
