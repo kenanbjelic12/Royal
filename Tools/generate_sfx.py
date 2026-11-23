@@ -8,6 +8,7 @@ import math
 import os
 import random
 import struct
+import sys
 import wave
 
 SR = 22050
@@ -15,8 +16,14 @@ OUT = os.path.join(os.path.dirname(__file__), "..", "Assets", "Audio")
 random.seed(42)
 
 
+FORCE = "--force" in sys.argv
+
+
 def write(name, samples):
     os.makedirs(OUT, exist_ok=True)
+    # never overwrite the ElevenLabs sounds / music that replaced these placeholders
+    if os.path.exists(os.path.join(OUT, name + ".wav")) and not FORCE:
+        return
     peak = max(1e-6, max(abs(s) for s in samples))
     gain = 0.89 / peak
     with wave.open(os.path.join(OUT, name + ".wav"), "w") as w:

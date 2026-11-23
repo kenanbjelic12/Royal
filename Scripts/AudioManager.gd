@@ -6,12 +6,13 @@ const AUDIO_DIR := "res://Assets/Audio/"
 const POOL_SIZE := 14
 
 var sfx_volume_db := -4.0
-var music_volume_db := -14.0
+var music_volume_db := -9.0   # music sits quietly under effects and voices
 var muted := false
 var _pool: Array[AudioStreamPlayer] = []
 var _cache: Dictionary = {}
 var _music: AudioStreamPlayer
 var _music_name: StringName = &""
+var _music_tween: Tween
 var _last_played: Dictionary = {}
 
 func _ready() -> void:
@@ -84,13 +85,25 @@ func play_music(music_name: StringName) -> void:
 	var s := _stream(StringName("music_" + String(music_name)))
 	if s == null or muted:
 		return
+	# gentle fade-in so music never starts abruptly
+	if _music_tween:
+		_music_tween.kill()
 	_music.stream = s
-	_music.volume_db = music_volume_db
+	_music.volume_db = -40.0
 	_music.play()
+	_music_tween = create_tween()
+	_music_tween.tween_property(_music, "volume_db", music_volume_db, 1.6).set_trans(Tween.TRANS_SINE)
 
-func stop_music() -> void:
+func stop_music(fade := 0.8) -> void:
 	_music_name = &""
-	_music.stop()
+	if _music_tween:
+		_music_tween.kill()
+	if fade <= 0.0 or not _music.playing:
+		_music.stop()
+		return
+	_music_tween = create_tween()
+	_music_tween.tween_property(_music, "volume_db", -40.0, fade).set_trans(Tween.TRANS_SINE)
+	_music_tween.tween_callback(_music.stop)
 
 func set_muted(v: bool) -> void:
 	muted = v
