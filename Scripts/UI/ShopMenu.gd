@@ -89,11 +89,16 @@ func _build() -> void:
 	for sp in specials:
 		var bought: bool = EconomyManager.shop_bought.has(sp.id)
 		var offer := _offer_box(row, sp.title, Color("#ff9c2a"))
-		var ic := UIIcon.new()
-		ic.kind = &"chest" if sp.has("chest") else &"star"
-		ic.tint = ChestPopup.CHEST_COLORS.get(sp.get("chest", ""), Color.WHITE)
-		ic.custom_minimum_size = Vector2(0, 100)
-		offer.add_child(ic)
+		if sp.has("chest") and ChestView.available(sp.chest):
+			var cvw := ChestView.make(sp.chest, false)
+			cvw.custom_minimum_size = Vector2(0, 110)
+			offer.add_child(cvw)
+		else:
+			var ic := UIIcon.new()
+			ic.kind = &"chest" if sp.has("chest") else &"star"
+			ic.tint = ChestPopup.CHEST_COLORS.get(sp.get("chest", ""), Color.WHITE)
+			ic.custom_minimum_size = Vector2(0, 110)
+			offer.add_child(ic)
 		offer.add_child(UIStyle.label(sp.desc, 18, Color.WHITE, 4))
 		_buy_button(offer, "SOLD" if bought else str(sp.gems), &"gem", sp.gems, bought, func():
 			EconomyManager.shop_bought[sp.id] = true
@@ -108,11 +113,16 @@ func _build() -> void:
 	row = _row()
 	for ch in [["gold", 20], ["rare", 60], ["epic", 160]]:
 		var offer := _offer_box(row, EconomyManager.CHESTS[ch[0]].name)
-		var ic := UIIcon.new()
-		ic.kind = &"chest"
-		ic.tint = ChestPopup.CHEST_COLORS[ch[0]]
-		ic.custom_minimum_size = Vector2(0, 110)
-		offer.add_child(ic)
+		if ChestView.available(ch[0]):
+			var cvw := ChestView.make(ch[0], false)
+			cvw.custom_minimum_size = Vector2(0, 120)
+			offer.add_child(cvw)
+		else:
+			var ic := UIIcon.new()
+			ic.kind = &"chest"
+			ic.tint = ChestPopup.CHEST_COLORS[ch[0]]
+			ic.custom_minimum_size = Vector2(0, 120)
+			offer.add_child(ic)
 		offer.add_child(UIStyle.label("%d cards" % EconomyManager.CHESTS[ch[0]].cards, 18, Color("#c9d4ff"), 4))
 		var type: String = ch[0]
 		_buy_button(offer, str(ch[1]), &"gem", ch[1], false, func():

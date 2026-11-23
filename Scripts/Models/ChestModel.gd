@@ -70,26 +70,6 @@ func _ready() -> void:
 	_glow.position = Vector3(0, parts.hinge.y - 0.02, 0)
 	_glow.visible = false
 	_pivot.add_child(_glow)
-	# soft beam of light rising out of the chest
-	var bm := StandardMaterial3D.new()
-	bm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	bm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	bm.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	bm.cull_mode = BaseMaterial3D.CULL_DISABLED
-	bm.albedo_color = Color(spec.glow.r, spec.glow.g, spec.glow.b, 0.22)
-	var beam_mesh := CylinderMesh.new()
-	beam_mesh.top_radius = size.x * 0.55
-	beam_mesh.bottom_radius = size.x * 0.3
-	beam_mesh.height = 1.4
-	beam_mesh.cap_top = false
-	beam_mesh.cap_bottom = false
-	var beam := MeshInstance3D.new()
-	beam.mesh = beam_mesh
-	beam.material_override = bm
-	beam.position = Vector3(0, parts.hinge.y + 0.7, 0)
-	beam.scale = Vector3(1, 1, 0.6)
-	_glow.add_child(beam)
-	beam.position = Vector3(0, 0.7, 0)
 	_light = OmniLight3D.new()
 	_light.light_color = spec.glow
 	_light.omni_range = 3.0

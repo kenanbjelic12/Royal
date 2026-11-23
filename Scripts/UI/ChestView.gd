@@ -50,9 +50,10 @@ func _ready() -> void:
 	_vp.add_child(chest)
 	var cam := Camera3D.new()
 	cam.fov = 30.0
-	cam.position = Vector3(0, 1.75, 2.75)
+	# live views leave room above for the opened lid; static icons frame the closed chest tightly
+	cam.position = Vector3(0, 2.0, 3.3) if live else Vector3(0, 1.55, 2.45)
 	_vp.add_child(cam)
-	cam.look_at(Vector3(0, 0.45, 0))
+	cam.look_at(Vector3(0, 0.62, 0) if live else Vector3(0, 0.45, 0))
 	if not live:
 		chest.set_process(false)
 		_freeze()

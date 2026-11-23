@@ -10,7 +10,7 @@ var _center: Control
 var _chest: Control
 var _view: ChestView   # 3D Meshy chest when available
 var _rays: Control
-var _items: HBoxContainer
+var _items: HFlowContainer
 var _t := 0.0
 var _done := false
 
@@ -33,19 +33,22 @@ func _ready() -> void:
 	_rays.draw.connect(_draw_rays)
 	add_child(_rays)
 	var v := VBoxContainer.new()
-	v.set_anchors_preset(Control.PRESET_FULL_RECT)
-	v.alignment = BoxContainer.ALIGNMENT_CENTER
+	v.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	v.offset_left = 20
+	v.offset_right = -20
+	v.offset_top = 110       # anchored to the top so the chest never moves
+	v.alignment = BoxContainer.ALIGNMENT_BEGIN
 	v.add_theme_constant_override("separation", 18)
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(v)
 	var type: String = rewards.get("type", "gold")
 	v.add_child(UIStyle.label(EconomyManager.CHESTS[type].name, 44, UIStyle.GOLD, 9))
 	_center = CenterContainer.new()
-	_center.custom_minimum_size = Vector2(0, 260)
+	_center.custom_minimum_size = Vector2(0, 320)
 	v.add_child(_center)
 	if ChestView.available(type):
 		_view = ChestView.make(type, true)
-		_view.custom_minimum_size = Vector2(340, 300)
+		_view.custom_minimum_size = Vector2(380, 320)
 		_chest = _view
 	else:
 		var ic := UIIcon.new()
@@ -54,10 +57,14 @@ func _ready() -> void:
 		ic.custom_minimum_size = Vector2(220, 220)
 		_chest = ic
 	_center.add_child(_chest)
-	_items = HBoxContainer.new()
-	_items.alignment = BoxContainer.ALIGNMENT_CENTER
-	_items.add_theme_constant_override("separation", 14)
-	_items.custom_minimum_size = Vector2(0, 220)
+	# rewards wrap onto several rows so a big chest never widens the layout
+	# (that used to push the chest and the Collect button off-centre)
+	_items = HFlowContainer.new()
+	_items.alignment = FlowContainer.ALIGNMENT_CENTER
+	_items.add_theme_constant_override("h_separation", 12)
+	_items.add_theme_constant_override("v_separation", 8)
+	_items.custom_minimum_size = Vector2(0, 330)   # room for 2 rows of rewards
+	_items.size_flags_horizontal = Control.SIZE_FILL
 	v.add_child(_items)
 	var btn := UIStyle.button("Collect", UIStyle.GREEN, 30, Vector2(240, 80))
 	btn.name = "Collect"
@@ -105,9 +112,9 @@ func _add_item(icon: StringName, value: String, caption: String) -> void:
 	var box := VBoxContainer.new()
 	var ic := UIIcon.new()
 	ic.kind = icon
-	ic.custom_minimum_size = Vector2(96, 96)
+	ic.custom_minimum_size = Vector2(88, 88)
 	box.add_child(ic)
-	box.add_child(UIStyle.label(value, 32, Color.WHITE, 7))
+	box.add_child(UIStyle.label(value, 28, Color.WHITE, 6))
 	box.add_child(UIStyle.label(caption, 18, Color("#c9d4ff"), 4))
 	_pop(box)
 
@@ -115,10 +122,10 @@ func _add_card(d: MonsterData, n: int) -> void:
 	AudioManager.play(&"card_select")
 	var box := VBoxContainer.new()
 	var cv := CardView.new().setup(d, EconomyManager.get_card_level(d.id))
-	cv.custom_minimum_size = Vector2(100, 128)
+	cv.custom_minimum_size = Vector2(88, 112)
 	cv.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_child(cv)
-	box.add_child(UIStyle.label("x%d" % n, 30, Color.WHITE, 7))
+	box.add_child(UIStyle.label("x%d" % n, 26, Color.WHITE, 6))
 	_pop(box)
 
 func _pop(c: Control) -> void:
