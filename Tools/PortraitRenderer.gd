@@ -23,6 +23,9 @@ const SHOTS := {
 	&"bomb_pirate": ["select", 0.55, -18.0, 0.78],
 	&"skeleton_squad": ["select", 0.3, -18.0, 0.78],
 }
+## Cards that use hand-made key art (Assets/Cards/<id>.png) – never overwritten.
+const CUSTOM_ART := [&"fire_knight", &"shadow_assassin", &"stone_golem", &"frost_dragon", &"poison_witch",
+	&"healing_fairy", &"viking_berserker", &"goblin_gang", &"skeleton_squad", &"bomb_pirate"]
 const CANDIDATES := [["idle", 0.6], ["select", 0.3], ["select", 0.55], ["select", 0.9], ["select", 1.3],
 	["attack", 0.3], ["attack", 0.5], ["spawn", 0.9]]
 
@@ -41,6 +44,8 @@ func _ready() -> void:
 		var out_dir := ProjectSettings.globalize_path("res://Assets/Cards/")
 		DirAccess.make_dir_recursive_absolute(out_dir)
 		for d: MonsterData in CardDatabase.deck():
+			if CUSTOM_ART.has(d.id) and not OS.get_cmdline_user_args().has("all"):
+				continue
 			var s: Array = SHOTS.get(d.id, ["idle", 0.5, -18.0, 1.0])
 			await _render(d, s[0], s[1], s[2], s[3], out_dir + String(d.id) + ".png")
 	get_tree().quit()

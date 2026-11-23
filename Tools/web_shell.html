@@ -38,7 +38,15 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; touch-action:
 	color: var(--ink); -webkit-text-stroke: 0.16em #0e1428; paint-order: stroke fill; }
 .status { margin: 0; text-align: center; font-size: 0.95rem; color: var(--muted); -webkit-text-stroke: 0.15em #0e1428; paint-order: stroke fill; }
 .status.error { color: #ffb0b0; }
-@media (prefers-reduced-motion: reduce) { #loader, .fill { transition: none; } }
+.play {
+	align-self: center; margin-top: 0.4rem; padding: 0.7rem 2.6rem; border: 0; border-radius: 16px;
+	font-family: var(--display); font-size: clamp(1.4rem, 6vw, 2rem); color: #fff; letter-spacing: 0.03em;
+	background: linear-gradient(180deg, #ffd84a, #f2a614); box-shadow: 0 6px 0 #a35f00, 0 10px 24px rgba(0, 0, 0, 0.35);
+	-webkit-text-stroke: 0.08em #5a2a00; paint-order: stroke fill; cursor: pointer; animation: pulse 1.4s ease-in-out infinite;
+}
+.play:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+@keyframes pulse { 50% { transform: scale(1.06); } }
+@media (prefers-reduced-motion: reduce) { #loader, .fill { transition: none; } .play { animation: none; } }
 </style>
 <canvas id="canvas">Royal Arena needs a browser with canvas support.</canvas>
 <div id="loader" role="status" aria-live="polite">
@@ -46,8 +54,50 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; touch-action:
 		<p class="tip" id="tip">Drag a card onto your half of the arena to summon a monster.</p>
 		<div class="track"><div class="fill" id="fill"></div><div class="pct" id="pct">0%</div></div>
 		<p class="status" id="status">Loading the arena...</p>
+		<button class="play" id="play" type="button" hidden>TAP TO PLAY</button>
 	</div>
 </div>
+<script>
+// --- Audio unlock for mobile browsers -------------------------------------
+// iOS / in-app web views only allow audio when the AudioContext is resumed
+// synchronously inside a touch handler. Godot resumes it later in its own
+// loop, which those browsers reject, so we track every context and resume
+// them (plus a silent buffer) directly in the first gesture.
+(function () {
+	const contexts = [];
+	window.__royalContexts = contexts;
+	const Native = window.AudioContext || window.webkitAudioContext;
+	if (Native) {
+		const Wrapped = function (...args) {
+			const ctx = new Native(...args);
+			contexts.push(ctx);
+			return ctx;
+		};
+		Wrapped.prototype = Native.prototype;
+		window.AudioContext = Wrapped;
+		if (window.webkitAudioContext) window.webkitAudioContext = Wrapped;
+	}
+	try {
+		// iOS 16.4+: play through the speaker even when the silent switch is on
+		if (navigator.audioSession) navigator.audioSession.type = "playback";
+	} catch (e) {}
+	window.__unlockAudio = function () {
+		for (const ctx of contexts) {
+			try {
+				if (ctx.state !== "running") ctx.resume();
+				const b = ctx.createBuffer(1, 1, 22050);
+				const src = ctx.createBufferSource();
+				src.buffer = b;
+				src.connect(ctx.destination);
+				src.start(0);
+			} catch (e) {}
+		}
+	};
+	for (const ev of ["pointerdown", "touchstart", "touchend", "mousedown", "keydown"]) {
+		window.addEventListener(ev, () => window.__unlockAudio(), { capture: true, passive: true });
+	}
+})();
+</script>
 <script>
 // Large files ship as gzip chunks (hosting limit per file). They are fetched with
 // progress, joined and decompressed here before the Godot engine receives them.
@@ -120,8 +170,18 @@ const engine = new Engine(GODOT_CONFIG);
 		document.getElementById("fill").style.width = "100%";
 		document.getElementById("pct").textContent = "100%";
 		clearInterval(window.__tipTimer);
-		setTimeout(() => loader.classList.add("done"), 250);
-		setTimeout(() => loader.remove(), 1000);
+		// A real tap starts the game with sound (mobile browsers need it).
+		status.textContent = "";
+		const play = document.getElementById("play");
+		play.hidden = false;
+		const start = () => {
+			window.__unlockAudio();
+			loader.classList.add("done");
+			setTimeout(() => loader.remove(), 700);
+		};
+		loader.addEventListener("pointerup", start, { once: true });
+		loader.addEventListener("keydown", start, { once: true });
+		play.focus();
 	}, (err) => fail("The game could not start: " + (err && err.message ? err.message : err)));
 })();
 </script>
