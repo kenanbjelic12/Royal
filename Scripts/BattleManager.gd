@@ -72,7 +72,8 @@ func _build_world() -> void:
 	var we := WorldEnvironment.new()
 	we.environment = WorldEnv.make_environment()
 	add_child(we)
-	WorldEnv.add_lights(self, true, -30.0, -55.0)
+	var sun := WorldEnv.add_lights(self, SettingsManager.shadows_enabled(), -30.0, -55.0)
+	SettingsManager.changed.connect(func(): if is_instance_valid(sun): sun.shadow_enabled = SettingsManager.shadows_enabled())
 	arena = load("res://Scenes/Arena/Arena.tscn").instantiate()
 	add_child(arena)
 	camera = BattleCamera.new()
@@ -179,6 +180,8 @@ func deploy_card(team: int, data: MonsterData, pos: Vector3) -> bool:
 	if team == 0 and not player_ai_controlled:
 		EconomyManager.add_quest_progress("deploy", 1)
 	card_played.emit(team, data, pos)
+	if team == 0:
+		SettingsManager.vibrate(25)
 	return true
 
 func spawn_monster(data: MonsterData, team: int, pos: Vector3, lvl := 1) -> MonsterController:
@@ -218,6 +221,8 @@ func damage_area(center: Vector3, r: float, amount: float, attacker_team: int, s
 	return victims
 
 func show_damage(c: Combatant, amount: float) -> void:
+	if not SettingsManager.damage_numbers:
+		return
 	var col := Color("#fff4c2") if c.is_building else (Color("#9fd0ff") if c.team == 0 else Color("#ffb3b3"))
 	VFX.damage_number(effects, c.aim_point() + Vector3(0, 0.9 if c.is_building else 0.5, 0), amount, col, c.is_building)
 
@@ -339,6 +344,7 @@ func _on_tower_destroyed(t: TowerController) -> void:
 	if t.team == 0 and t.kind != &"king":
 		AudioManager.play_voice("king_laugh")   # the enemy king gloats
 	tower_destroyed.emit(t)
+	SettingsManager.vibrate(120)
 	if t.kind == &"king" or phase == &"overtime":
 		# king falls -> instant win; any tower in overtime -> sudden death win
 		if t.kind == &"king":

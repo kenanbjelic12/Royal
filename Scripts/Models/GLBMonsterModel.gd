@@ -84,7 +84,7 @@ func _relative(n: Node, root: Node) -> Transform3D:
 	return Transform3D(Basis.IDENTITY, xf.origin) if xf.basis.get_scale().x < 0.05 else xf
 
 func _add_outline(mi: MeshInstance3D) -> void:
-	if mi.mesh == null:
+	if mi.mesh == null or not outline_enabled:
 		return
 	for s in mi.mesh.get_surface_count():
 		var m := mi.get_active_material(s)

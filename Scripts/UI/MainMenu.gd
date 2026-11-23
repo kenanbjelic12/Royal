@@ -105,9 +105,17 @@ func _build() -> void:
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	top.add_child(spacer)
+	var right := VBoxContainer.new()
+	right.add_theme_constant_override("separation", 8)
+	right.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	top.add_child(right)
 	var cur := CurrencyBar.new()
-	cur.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	top.add_child(cur)
+	right.add_child(cur)
+	var gear := UIStyle.button("Settings", UIStyle.BLUE, 20, Vector2(150, 48))
+	gear.name = "SettingsButton"
+	gear.size_flags_horizontal = Control.SIZE_SHRINK_END
+	gear.pressed.connect(func(): SettingsPopup.open(ui))
+	right.add_child(gear)
 
 	# --- logo
 	var logo := VBoxContainer.new()
@@ -364,4 +372,8 @@ func run_self_test() -> bool:
 	ok = ok and not r.is_empty() and EconomyManager.gems < gems_before and EconomyManager.chests.is_empty()
 	_refresh()
 	ok = ok and _battle_btn != null and _battle_btn.is_visible_in_tree()
+	var sp := SettingsPopup.open(ui)
+	await get_tree().process_frame
+	ok = ok and sp.find_child("ResetProgress", true, false) != null and sp.find_child("PlayerName", true, false) != null
+	sp.close()
 	return ok

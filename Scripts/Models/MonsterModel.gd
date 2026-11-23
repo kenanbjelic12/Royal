@@ -56,6 +56,8 @@ var _overlay_on := false
 
 # ---------------------------------------------------------------- lifecycle
 func _ready() -> void:
+	if not Engine.is_editor_hint() and not SettingsManager.outlines_enabled():
+		outline_enabled = false
 	_root = Node3D.new()
 	_root.name = "Rig"
 	add_child(_root)

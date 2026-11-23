@@ -344,6 +344,10 @@ func open_pause() -> void:
 	resume.name = "Resume"
 	resume.pressed.connect(close_pause)
 	v.add_child(resume)
+	var settings := UIStyle.button("Settings", UIStyle.BLUE, 30, Vector2(320, 86))
+	settings.name = "PauseSettings"
+	settings.pressed.connect(func(): SettingsPopup.open(_pause_layer, true))
+	v.add_child(settings)
 	var quit := UIStyle.button("Exit to Menu", UIStyle.RED, 30, Vector2(320, 86))
 	quit.name = "ExitToMenu"
 	quit.pressed.connect(exit_to_menu)

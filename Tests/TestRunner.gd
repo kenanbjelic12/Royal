@@ -8,6 +8,7 @@ var battle: BattleManager
 
 func _ready() -> void:
 	EconomyManager.persist = false
+	SettingsManager.persist = false
 	EconomyManager.reset_profile()
 	AudioManager.set_muted(true)
 	Engine.time_scale = 4.0
@@ -329,6 +330,28 @@ func test_menus() -> void:
 	hud.close_pause()
 	await sim(0.5)
 	check("resume continues the battle", not get_tree().paused and battle.time_left < t0)
+	# settings
+	SettingsManager.set_value("music", 0.25)
+	SettingsManager.set_value("voice", 0.0)
+	var mi := AudioServer.get_bus_index("Music")
+	var vi := AudioServer.get_bus_index("Voice")
+	check("music volume slider changes the Music bus", mi >= 0 and absf(AudioServer.get_bus_volume_db(mi) - linear_to_db(0.25)) < 0.1)
+	check("voices at 0% mute the Voice bus", vi >= 0 and AudioServer.is_bus_mute(vi))
+	SettingsManager.set_value("damage_numbers", false)
+	var before_fx := battle.effects_root().get_child_count()
+	battle.show_damage(battle.get_towers(1)[0], 100.0)
+	check("damage numbers can be turned off", battle.effects_root().get_child_count() == before_fx)
+	SettingsManager.set_value("damage_numbers", true)
+	SettingsManager.set_value("quality", SettingsManager.Quality.LOW)
+	check("low quality turns battle shadows off", not (battle.get_node("Sun") as DirectionalLight3D).shadow_enabled)
+	SettingsManager.set_value("quality", SettingsManager.Quality.HIGH)
+	check("high quality turns battle shadows on", (battle.get_node("Sun") as DirectionalLight3D).shadow_enabled)
+	SettingsManager.set_value("music", 0.7)
+	SettingsManager.set_value("voice", 0.9)
+	var sp := SettingsPopup.open(hud.root, true)
+	await get_tree().process_frame
+	check("settings screen has music/sfx/voice sliders", sp.find_child("Slider_music", true, false) != null and sp.find_child("Slider_sfx", true, false) != null and sp.find_child("Slider_voice", true, false) != null)
+	sp.close()
 	if battle:
 		battle.queue_free()
 		battle = null

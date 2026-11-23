@@ -17,6 +17,7 @@ boot_splash/use_filter=true
 
 [autoload]
 
+SettingsManager="*res://Scripts/SettingsManager.gd"
 GameManager="*res://Scripts/GameManager.gd"
 EconomyManager="*res://Scripts/EconomyManager.gd"
 CardDatabase="*res://Scripts/Data/CardDatabase.gd"

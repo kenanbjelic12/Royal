@@ -21,6 +21,7 @@ func _ready() -> void:
 		add_child(p)
 		_pool.append(p)
 	_music = AudioStreamPlayer.new()
+	_music.bus = &"Music"
 	add_child(_music)
 	_music.finished.connect(func(): if _music_name != &"": _music.play())
 
@@ -53,10 +54,10 @@ func play_voice(base: String, volume_offset := 2.0) -> bool:
 	var list: Array = _variants[base]
 	if list.is_empty():
 		return false
-	play(list[randi() % list.size()], 0.04, volume_offset)
+	play(list[randi() % list.size()], 0.04, volume_offset, &"Voice")
 	return true
 
-func play(sound: StringName, pitch_var := 0.08, volume_offset := 0.0) -> void:
+func play(sound: StringName, pitch_var := 0.08, volume_offset := 0.0, bus: StringName = &"SFX") -> void:
 	if muted or sound == &"":
 		return
 	# avoid stacking the exact same sound in the same frame (big fights)
@@ -72,6 +73,7 @@ func play(sound: StringName, pitch_var := 0.08, volume_offset := 0.0) -> void:
 			p.stream = s
 			p.pitch_scale = 1.0 + randf_range(-pitch_var, pitch_var)
 			p.volume_db = sfx_volume_db + volume_offset
+			p.bus = bus
 			p.play()
 			return
 

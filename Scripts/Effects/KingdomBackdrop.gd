@@ -19,7 +19,7 @@ func _ready() -> void:
 	env.fog_sky_affect = 0.0
 	we.environment = env
 	add_child(we)
-	WorldEnv.add_lights(self, true, -40.0, -35.0)
+	WorldEnv.add_lights(self, SettingsManager.shadows_enabled(), -40.0, -35.0)
 	_cam = Camera3D.new()
 	_cam.fov = 50
 	add_child(_cam)
