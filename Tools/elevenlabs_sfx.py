@@ -8,6 +8,7 @@ Usage: python3 Tools/elevenlabs_sfx.py [--only name_prefix] [--force]
 """
 import json
 import os
+import subprocess
 import sys
 import urllib.request
 
@@ -128,8 +129,14 @@ def generate(name, prompt, seconds):
                                  headers={"xi-api-key": KEY, "Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=120) as r:
         data = r.read()
-    with open(os.path.join(OUT, name + ".mp3"), "wb") as f:
+    mp3 = os.path.join(OUT, name + ".mp3")
+    with open(mp3, "wb") as f:
         f.write(data)
+    # Godot's web build plays sounds as "samples", which needs WAV/OGG, not MP3
+    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", mp3, "-ac", "1", "-ar", "32000",
+                    "-sample_fmt", "s16", "-af", "loudnorm=I=-16:TP=-1.5:LRA=11",
+                    os.path.join(OUT, name + ".wav")], check=True)
+    os.remove(mp3)
     return len(data)
 
 
@@ -140,7 +147,7 @@ if __name__ == "__main__":
     for name, (prompt, sec) in SOUNDS.items():
         if only and not name.startswith(only):
             continue
-        if os.path.exists(os.path.join(OUT, name + ".mp3")) and not force:
+        if os.path.exists(os.path.join(OUT, name + ".wav")) and not force:
             continue
         try:
             n = generate(name, prompt, sec)

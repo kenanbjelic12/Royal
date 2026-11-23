@@ -1,32 +1,51 @@
 extends Node
 ## Renders card illustrations from the real in-game 3D models (transparent PNG)
 ## into res://Assets/Cards/<id>.png, so card art always matches the monster.
-## Usage (needs a display / xvfb): godot --path . res://Tools/PortraitRenderer.tscn
+## Close "hero" framing (from the hips up) in a chosen moment of an animation.
+##
+## Usage (needs a display / xvfb):
+##   godot --path . res://Tools/PortraitRenderer.tscn                 # final card art
+##   godot --path . res://Tools/PortraitRenderer.tscn -- candidates=/tmp/out   # pose contact sheets
 
 const SIZE := Vector2i(512, 600)
-## Per monster framing: pose, pose time (s), camera pos, look-at, model yaw.
+## Best pose per monster: [clip, seconds into the clip, yaw degrees, zoom].
+## zoom < 1 frames tighter (more of the face), > 1 shows more of the body.
 const SHOTS := {
-	&"fire_knight": {"pose": "select", "time": 0.5, "cam": Vector3(-1.3, 1.5, -3.6), "look": Vector3(0, 1.05, 0), "fov": 36.0},
-	&"shadow_assassin": {"pose": "walk", "time": 0.45, "cam": Vector3(-0.9, 1.25, -2.9), "look": Vector3(0, 0.78, 0), "fov": 34.0},
-	&"stone_golem": {"pose": "idle", "time": 0.5, "cam": Vector3(-1.3, 1.9, -4.2), "look": Vector3(0, 1.1, 0), "fov": 36.0},
-	&"frost_dragon": {"pose": "idle", "time": 0.5, "cam": Vector3(-1.0, 1.35, -3.1), "look": Vector3(0, 0.68, 0), "fov": 36.0},
-	&"thunder_mage": {"pose": "idle", "time": 0.5, "cam": Vector3(-1.1, 1.45, -3.4), "look": Vector3(0, 0.85, 0), "fov": 35.0},
-	&"healing_fairy": {"pose": "idle", "time": 0.5, "cam": Vector3(-0.9, 1.2, -3.0), "look": Vector3(0, 0.7, 0), "fov": 35.0},
-	&"goblin_gang": {"pose": "walk", "time": 0.45, "cam": Vector3(-0.8, 1.0, -2.5), "look": Vector3(0, 0.55, 0), "fov": 35.0},
-	&"viking_berserker": {"pose": "walk", "time": 0.45, "cam": Vector3(-1.2, 1.5, -3.6), "look": Vector3(0, 0.9, 0), "fov": 35.0},
-	&"bomb_pirate": {"pose": "idle", "time": 0.5, "cam": Vector3(-1.1, 1.4, -3.4), "look": Vector3(0, 0.8, 0), "fov": 35.0},
-	&"skeleton_squad": {"pose": "walk", "time": 0.45, "cam": Vector3(-0.8, 0.95, -2.4), "look": Vector3(0, 0.5, 0), "fov": 35.0},
-	&"poison_witch": {"pose": "select", "time": 0.45, "cam": Vector3(-1.2, 1.6, -3.7), "look": Vector3(0, 1.05, 0), "fov": 36.0},
+	&"fire_knight": ["select", 0.55, -18.0, 1.0],
+	&"shadow_assassin": ["walk", 0.45, -15.0, 0.72],
+	&"stone_golem": ["select", 0.3, -18.0, 0.78],
+	&"frost_dragon": ["select", 1.3, -18.0, 0.85],
+	&"poison_witch": ["select", 0.55, -18.0, 0.78],
+	&"thunder_mage": ["spawn", 0.9, -18.0, 0.72],
+	&"healing_fairy": ["select", 0.55, -18.0, 0.75],
+	&"goblin_gang": ["select", 0.55, -18.0, 0.75],
+	&"viking_berserker": ["select", 0.55, -18.0, 0.75],
+	&"bomb_pirate": ["select", 0.55, -18.0, 0.78],
+	&"skeleton_squad": ["select", 0.3, -18.0, 0.78],
 }
+const CANDIDATES := [["idle", 0.6], ["select", 0.3], ["select", 0.55], ["select", 0.9], ["select", 1.3],
+	["attack", 0.3], ["attack", 0.5], ["spawn", 0.9]]
 
 func _ready() -> void:
-	var out_dir := ProjectSettings.globalize_path("res://Assets/Cards/")
-	DirAccess.make_dir_recursive_absolute(out_dir)
-	for d: MonsterData in CardDatabase.deck():
-		await _render(d, out_dir + String(d.id) + ".png")
+	var cand_dir := ""
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("candidates="):
+			cand_dir = a.substr(11)
+	if cand_dir != "":
+		DirAccess.make_dir_recursive_absolute(cand_dir)
+		for d: MonsterData in CardDatabase.deck():
+			for i in CANDIDATES.size():
+				var c: Array = CANDIDATES[i]
+				await _render(d, c[0], c[1], -18.0, 1.0, "%s/%s_%d_%s_%.2f.png" % [cand_dir, d.id, i, c[0], c[1]])
+	else:
+		var out_dir := ProjectSettings.globalize_path("res://Assets/Cards/")
+		DirAccess.make_dir_recursive_absolute(out_dir)
+		for d: MonsterData in CardDatabase.deck():
+			var s: Array = SHOTS.get(d.id, ["idle", 0.5, -18.0, 1.0])
+			await _render(d, s[0], s[1], s[2], s[3], out_dir + String(d.id) + ".png")
 	get_tree().quit()
 
-func _render(d: MonsterData, path: String) -> void:
+func _render(d: MonsterData, clip: String, time: float, yaw: float, zoom: float, path: String) -> void:
 	var vp := SubViewport.new()
 	vp.size = SIZE
 	vp.transparent_bg = true
@@ -35,35 +54,46 @@ func _render(d: MonsterData, path: String) -> void:
 	vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	add_child(vp)
 	var we := WorldEnvironment.new()
-	var env := WorldEnv.make_environment(0.8)
+	var env := WorldEnv.make_environment(0.85)
 	env.background_mode = Environment.BG_CLEAR_COLOR
 	env.glow_enabled = false
 	we.environment = env
 	vp.add_child(we)
 	WorldEnv.add_lights(vp, true, 150.0, -40.0)
-	# strong coloured rim light from behind for a premium card look
-	var rim := DirectionalLight3D.new()
+	var rim := DirectionalLight3D.new()   # coloured rim light from behind
 	rim.rotation_degrees = Vector3(-20, -20, 0)
 	rim.light_color = d.accent_color.lightened(0.4)
-	rim.light_energy = 0.9
+	rim.light_energy = 1.0
 	vp.add_child(rim)
-	var shot: Dictionary = SHOTS.get(d.id, {"pose": "idle", "time": 0.5, "cam": Vector3(-1, 1.2, -2.8), "look": Vector3(0, 0.8, 0), "fov": 35.0})
 	var m := MonsterFactory.create_model(d)
 	vp.add_child(m)
-	m.rotation.y = deg_to_rad(-10)
+	m.rotation.y = deg_to_rad(yaw)
 	m.set_process(false)
-	match shot.pose:
+	match clip:
 		"select": m.play_select()
 		"attack": m.play_attack(1.0)
 		"walk": m.set_moving(true)
-	for i in int(shot.time * 60.0):
+		"spawn": m.play_spawn()
+	for i in int(time * 60.0):
 		m._apply_pose(1.0 / 60.0)
+	if m.get("_player") != null:
+		var ap: AnimationPlayer = m.get("_player")
+		ap.advance(0.0)
+	# frame from the hips up using the design height of the model
+	var h := 1.3
+	if m is GLBMonsterModel:
+		h = float(GLBMonsterModel.SETUP.get(d.id, {"height": 1.3}).height)
+	var base_y := 0.0
+	if m is GLBMonsterModel and bool(GLBMonsterModel.SETUP.get(d.id, {}).get("fly", false)):
+		base_y = 0.0
 	var cam := Camera3D.new()
-	cam.fov = shot.fov
+	cam.fov = 30.0
 	vp.add_child(cam)
-	cam.position = shot.cam
-	cam.look_at(shot.look)
-	for i in 6:
+	var look := Vector3(0, base_y + h * (0.62 + (1.0 - zoom) * 0.25), 0)
+	var dist := (h * 0.62 * zoom) / tan(deg_to_rad(cam.fov * 0.5))
+	cam.position = look + Vector3(-0.28, 0.22, -1.0).normalized() * dist
+	cam.look_at(look)
+	for i in 8:
 		await RenderingServer.frame_post_draw
 	var img := vp.get_texture().get_image()
 	img.save_png(path)

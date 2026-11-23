@@ -16,7 +16,7 @@ shader_type canvas_item;
 uniform vec4 falls[6];      // waterfalls: x0, y0, x1, y1 in UV
 uniform vec4 flags[6];      // flags: x0, y0, x1, y1 in UV
 uniform vec4 bobs[2];       // bobbing regions (balloon, far island)
-uniform vec2 px = vec2(1.0 / 1536.0, 1.0 / 1024.0);
+uniform vec2 px = vec2(0.000651, 0.000977);
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float noise(vec2 p) {
