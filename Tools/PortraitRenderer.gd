@@ -25,7 +25,7 @@ const SHOTS := {
 }
 ## Cards that use hand-made key art (Assets/Cards/<id>.png) – never overwritten.
 const CUSTOM_ART := [&"fire_knight", &"shadow_assassin", &"stone_golem", &"frost_dragon", &"poison_witch",
-	&"healing_fairy", &"viking_berserker", &"goblin_gang", &"skeleton_squad", &"bomb_pirate"]
+	&"healing_fairy", &"viking_berserker", &"goblin_gang", &"skeleton_squad", &"bomb_pirate", &"thunder_mage"]
 const CANDIDATES := [["idle", 0.6], ["select", 0.3], ["select", 0.55], ["select", 0.9], ["select", 1.3],
 	["attack", 0.3], ["attack", 0.5], ["spawn", 0.9]]
 

@@ -17,8 +17,17 @@ var _pocket_overlays: Dictionary = {}
 var _rng := RandomNumberGenerator.new()
 var _mat_cache := {}
 
+const PAINTED_GROUND := "res://Assets/Textures/arena_ground.jpg"
+## World area covered by the painted arena texture.
+const PAINTED_RECT := Rect2(-12.5, -19.0, 25.0, 38.0)
+
 func _ready() -> void:
 	_rng.seed = 1337
+	if ResourceLoader.exists(PAINTED_GROUND):
+		_build_painted()
+		MeshBatcher.bake_tree(self)
+		_build_deploy_overlay()
+		return
 	_build_ground()
 	_build_river()
 	for bx in ArenaLayout.BRIDGE_X:
@@ -30,6 +39,83 @@ func _ready() -> void:
 	# static batching: thousands of decoration parts -> a few dozen draw calls
 	MeshBatcher.bake_tree(self)
 	_build_deploy_overlay()
+
+## Painted arena art as the ground (bridges, paths, river, walls, houses are
+## part of the painting), plus animated water on the river and forest/meadow
+## outside the painting for wide screens.
+func _build_painted() -> void:
+	var gm := StandardMaterial3D.new()
+	gm.albedo_texture = load(PAINTED_GROUND)
+	gm.roughness = 1.0
+	gm.metallic_specular = 0.1
+	gm.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	gm.diffuse_mode = BaseMaterial3D.DIFFUSE_LAMBERT_WRAP
+	var pm := PlaneMesh.new()
+	pm.size = PAINTED_RECT.size
+	var ground := _mesh(pm, gm, Vector3(PAINTED_RECT.get_center().x, 0, PAINTED_RECT.get_center().y), Vector3.ZERO, Vector3.ONE, false)
+	ground.set_meta("batched", true)   # keep its own material
+	# meadow around the painting
+	var om := _mat(Color("#5d9e3c"))
+	var outer := PlaneMesh.new()
+	outer.size = Vector2(110, 110)
+	_mesh(outer, om, Vector3(0, -0.03, 0), Vector3.ZERO, Vector3.ONE, false)
+	# animated water over the painted river, leaving the wooden bridges visible
+	var sm := ShaderMaterial.new()
+	sm.shader = load("res://Assets/Materials/water.gdshader")
+	sm.set_shader_parameter("bank_half_width", 0.85)
+	sm.set_shader_parameter("alpha", 0.55)
+	var bw := 1.55
+	var spans := [[-12.5, ArenaLayout.BRIDGE_X[0] - bw], [ArenaLayout.BRIDGE_X[0] + bw, ArenaLayout.BRIDGE_X[1] - bw], [ArenaLayout.BRIDGE_X[1] + bw, 12.5]]
+	for sp in spans:
+		var w := MeshInstance3D.new()
+		var wp := PlaneMesh.new()
+		wp.size = Vector2(sp[1] - sp[0], 1.55)
+		wp.subdivide_width = 16
+		w.mesh = wp
+		w.material_override = sm
+		w.position = Vector3((sp[0] + sp[1]) * 0.5, 0.015, 0.05)
+		w.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(w)
+	# foam where the painted waterfalls land
+	for side: float in [-1.0, 1.0]:
+		var foam := CPUParticles3D.new()
+		foam.amount = 18
+		foam.lifetime = 0.9
+		var fq := QuadMesh.new()
+		fq.size = Vector2(0.45, 0.45)
+		var fm := StandardMaterial3D.new()
+		fm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		fm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		fm.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+		fm.vertex_color_use_as_albedo = true
+		fm.albedo_texture = VFX.soft_dot_texture()
+		fq.material = fm
+		foam.mesh = fq
+		foam.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+		foam.emission_box_extents = Vector3(0.4, 0.05, 0.35)
+		foam.direction = Vector3(0, 1, 0)
+		foam.spread = 40
+		foam.initial_velocity_min = 0.6
+		foam.initial_velocity_max = 1.4
+		foam.gravity = Vector3(0, -2.5, 0)
+		var g := Gradient.new()
+		g.set_color(0, Color(1, 1, 1, 0.85))
+		g.set_color(1, Color(0.85, 0.95, 1, 0.0))
+		foam.color_ramp = g
+		foam.position = Vector3(side * 10.6, 0.1, 0.2)
+		add_child(foam)
+	# forest beyond the painting so wide screens never show an empty edge
+	for i in 90:
+		var sx := -1.0 if i % 2 == 0 else 1.0
+		var p := Vector3(sx * _rng.randf_range(13.0, 30.0), 0, _rng.randf_range(-24.0, 24.0))
+		match i % 4:
+			0, 1: _tree(p, _rng.randf_range(0.9, 1.5))
+			2: _bush(p)
+			3: _rock(p, _rng.randf_range(0.4, 0.9))
+	for i in 40:
+		var z := (-1.0 if i % 2 == 0 else 1.0) * _rng.randf_range(19.5, 26.0)
+		var p := Vector3(_rng.randf_range(-13.0, 13.0), 0, z)
+		_tree(p, _rng.randf_range(0.9, 1.4)) if i % 3 != 0 else _bush(p)
 
 # ------------------------------------------------------------------ materials
 func _mat(c: Color, rough := 0.9) -> StandardMaterial3D:
