@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/MonsterData.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+id = &"thunder_mage"
+display_name = "Thunder Mage"
+role = "Chain Caster"
+description = "A bright young mage whose lightning jumps from enemy to enemy, hitting up to three targets."
+rarity = 2
+elixir_cost = 5
+accent_color = Color(0.4, 0.7, 1, 1)
+max_hp = 650.0
+damage = 140.0
+attack_speed = 1.6
+attack_range = 5.0
+sight_range = 6.0
+move_speed = 1.4
+target_type = 0
+can_hit_air = true
+is_flying = false
+splash_radius = 0
+projectile = 3
+projectile_speed = 30
+radius = 0.4
+mass = 1.0
+model_scale = 1.0
+model_glb_path = "res://Assets/Monsters/thunder_mage/thunder_mage_rigged.glb"
+sfx_attack = &"lightning_zap"
+chain_targets = 2
+chain_range = 2.8

@@ -41,8 +41,13 @@ func _process(delta: float) -> void:
 func elixir() -> float:
 	return battle.elixir[team].elixir
 
+var cycle: Hand
+
+## Cards the AI can play right now (its own 8-card deck cycles like the player's).
 func hand() -> Array[MonsterData]:
-	return CardDatabase.deck()
+	if cycle == null:
+		cycle = Hand.new(CardDatabase.random_deck(_rng))
+	return cycle.slots
 
 func home() -> float:
 	return ArenaLayout.home_sign(team)
@@ -120,17 +125,18 @@ func _defend(threats: Array) -> bool:
 
 ## How good is card `c` against enemy monster `e` (higher = better).
 func matchup_score(c: MonsterData, e: MonsterData, e_hp := -1.0) -> float:
-	if c.target_type == MonsterData.TargetType.BUILDINGS_ONLY:
+	if c.target_type != MonsterData.TargetType.ANY:
 		return 0.0
 	if e.is_flying and not c.can_hit_air:
 		return 0.0
 	var e_health := e_hp if e_hp > 0.0 else e.max_hp
 	var my_dps := c.damage / c.attack_speed + c.poison_dps * 0.6
+	my_dps *= float(c.spawn_count) * (1.0 + 0.5 * c.chain_targets) if e.max_hp < 800.0 else float(c.spawn_count)
 	var ttk := e_health / maxf(my_dps, 1.0)                 # how fast I kill it
-	var e_can_hit_me := e.target_type != MonsterData.TargetType.BUILDINGS_ONLY and (not c.is_flying or e.can_hit_air)
+	var e_can_hit_me := e.target_type == MonsterData.TargetType.ANY and (not c.is_flying or e.can_hit_air)
 	var survive := 99.0
 	if e_can_hit_me:
-		survive = c.max_hp / maxf(e.damage / e.attack_speed, 1.0)
+		survive = c.max_hp * c.spawn_count / maxf(e.damage / e.attack_speed * (2.0 if e.splash_radius > 0.0 and c.spawn_count > 1 else 1.0), 1.0)
 	var ratio := minf(survive / ttk, 6.0)
 	var s := ratio / float(c.elixir_cost)
 	if e.target_type == MonsterData.TargetType.BUILDINGS_ONLY:
@@ -278,7 +284,11 @@ func _best_by(score: Callable) -> MonsterData:
 
 func _play(c: MonsterData, pos: Vector3, why: String) -> bool:
 	pos = ArenaLayout.clamp_deploy(team, pos, battle.open_enemy_lanes(team))
+	var slot := hand().find(c)
+	if slot < 0:
+		return false
 	if battle.deploy_card(team, c, pos):
+		cycle.play(slot)
 		_last_played = c.id
 		_recent.append(c.id)
 		if _recent.size() > 3:

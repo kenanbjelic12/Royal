@@ -519,3 +519,94 @@ static func frost_shell(parent: Node3D, height: float) -> Node3D:
 		mi.rotation = Vector3(randf_range(-0.6, 0.6), 0, randf_range(-0.8, 0.8))
 		root.add_child(mi)
 	return root
+
+# ----------------------------------------------------------------- new card effects
+## Jagged lightning bolt between two points (fades fast).
+static func lightning_bolt(parent: Node, a: Vector3, b: Vector3, color := Color(0.6, 0.85, 1.0)) -> void:
+	if parent == null or not parent.is_inside_tree():
+		return
+	var pts: Array[Vector3] = [a]
+	var seg := 9
+	var side := (b - a).cross(Vector3.UP).normalized()
+	for i in range(1, seg):
+		var f := float(i) / seg
+		pts.append(a.lerp(b, f) + side * randf_range(-0.35, 0.35) + Vector3(0, randf_range(-0.3, 0.3), 0))
+	pts.append(b)
+	var im := ImmediateMesh.new()
+	for width: float in [0.16, 0.06]:
+		im.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+		for i in pts.size() - 1:
+			var p0 := pts[i]
+			var p1 := pts[i + 1]
+			var w := Vector3.UP * width
+			im.surface_add_vertex(p0 - w); im.surface_add_vertex(p0 + w); im.surface_add_vertex(p1 + w)
+			im.surface_add_vertex(p0 - w); im.surface_add_vertex(p1 + w); im.surface_add_vertex(p1 - w)
+			var s := side * width
+			im.surface_add_vertex(p0 - s); im.surface_add_vertex(p0 + s); im.surface_add_vertex(p1 + s)
+			im.surface_add_vertex(p0 - s); im.surface_add_vertex(p1 + s); im.surface_add_vertex(p1 - s)
+		im.surface_end()
+	var mi := MeshInstance3D.new()
+	mi.mesh = im
+	var outer := StandardMaterial3D.new()
+	outer.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	outer.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	outer.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	outer.cull_mode = BaseMaterial3D.CULL_DISABLED
+	outer.albedo_color = Color(color.r * 1.5, color.g * 1.5, color.b * 1.8, 0.8)
+	var core := outer.duplicate() as StandardMaterial3D
+	core.albedo_color = Color(2, 2, 2, 1)
+	mi.set_surface_override_material(0, outer)
+	mi.set_surface_override_material(1, core)
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(mi)
+	var tw := mi.create_tween().set_parallel(true)
+	tw.tween_property(outer, "albedo_color:a", 0.0, 0.25)
+	tw.tween_property(core, "albedo_color:a", 0.0, 0.2)
+	tw.chain().tween_callback(mi.queue_free)
+
+static func lightning_hit(parent: Node, pos: Vector3) -> void:
+	burst(parent, pos, Color(0.7, 0.9, 1.0), 16, 4.5, 0.16, 0.3, Vector3.ZERO, true, true)
+	burst(parent, pos, Color(0.5, 0.75, 1.0, 0.8), 4, 0.5, 1.2, 0.25, Vector3.ZERO, true)
+
+## Healing wave: green ring + rising plus-sparkles.
+static func heal_pulse(parent: Node, pos: Vector3, radius: float, height := 0.0) -> void:
+	shockwave(parent, Vector3(pos.x, 0.05, pos.z), Color(0.4, 1.0, 0.5, 0.9), radius, 0.5)
+	var p := burst(parent, Vector3(pos.x, maxf(height, 0.3), pos.z), Color(0.6, 1.0, 0.6), 14, 1.5, 0.2, 0.8, Vector3(0, 1.0, 0), true, true, Vector3.DOWN, 70.0)
+	if p:
+		p.emission_sphere_radius = 0.4
+
+static func heal_sparkle(parent: Node, pos: Vector3) -> void:
+	burst(parent, pos + Vector3(0, 0.3, 0), Color(0.5, 1.0, 0.5), 8, 1.2, 0.18, 0.7, Vector3(0, 1.5, 0), true, true, Vector3.UP, 40.0)
+
+## Dust and speed streaks behind a charging unit (toggle `emitting`).
+static func charge_trail(parent: Node3D) -> CPUParticles3D:
+	var p := CPUParticles3D.new()
+	p.amount = 20
+	p.lifetime = 0.5
+	p.local_coords = false
+	var qm := QuadMesh.new()
+	qm.size = Vector2(0.5, 0.5)
+	qm.material = _particle_material(false)
+	p.mesh = qm
+	p.direction = Vector3.UP
+	p.spread = 40.0
+	p.initial_velocity_min = 0.3
+	p.initial_velocity_max = 0.9
+	p.gravity = Vector3.ZERO
+	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	p.emission_sphere_radius = 0.3
+	var g := Gradient.new()
+	g.set_color(0, Color(0.9, 0.8, 0.6, 0.7))
+	g.set_color(1, Color(0.9, 0.8, 0.6, 0.0))
+	p.color_ramp = g
+	p.position = Vector3(0, 0.2, 0)
+	p.emitting = false
+	parent.add_child(p)
+	return p
+
+static func bomb_explosion(parent: Node, pos: Vector3, radius := 1.4) -> void:
+	var ground := Vector3(pos.x, 0.05, pos.z)
+	burst(parent, ground + Vector3(0, 0.4, 0), Color(1.0, 0.75, 0.25), 30, 5.0, 0.45, 0.5, Vector3(0, 2, 0), true)
+	burst(parent, ground + Vector3(0, 0.4, 0), Color(0.35, 0.32, 0.3, 0.8), 16, 2.0, 1.0, 1.1, Vector3(0, 1.2, 0), false)
+	shockwave(parent, ground, Color(1, 0.7, 0.3, 0.9), radius * 1.5, 0.4)
+	ground_cracks(parent, ground, radius * 1.8, 1.4)

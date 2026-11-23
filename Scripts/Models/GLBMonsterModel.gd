@@ -14,6 +14,11 @@ const SETUP := {
 	&"stone_golem": {"height": 2.15, "impact": 0.6, "attack_len": 1.5},
 	&"frost_dragon": {"height": 1.3, "impact": 0.55, "attack_len": 0.8, "fly": true},
 	&"poison_witch": {"height": 1.6, "impact": 0.58, "attack_len": 0.9},
+	&"thunder_mage": {"height": 1.45, "impact": 0.6, "attack_len": 0.9},
+	&"healing_fairy": {"height": 1.15, "impact": 0.5, "attack_len": 0.8, "fly": true},
+	&"goblin_gang": {"height": 0.95, "impact": 0.45, "attack_len": 0.55, "run": true},
+	&"viking_berserker": {"height": 1.5, "impact": 0.55, "attack_len": 0.9},
+	&"bomb_pirate": {"height": 1.4, "impact": 0.6, "attack_len": 0.9},
 }
 
 var glb_path := ""
@@ -132,6 +137,40 @@ func _add_weapons() -> void:
 				add_mesh("orb_core", orb, sphere(0.09, -1, 12), glow_mat(Color("#7dff3a"), 1.5), Vector3.ZERO)
 				add_mesh("", orb, sphere(0.13, -1, 12), glow_mat(Color(0.5, 1.0, 0.3), 0.7, 0.35), Vector3.ZERO, Vector3.ZERO, Vector3.ONE, false)
 				add_particles("orb_fx", orb, Color("#7dff3a"), 12, 0.8, 0.09, Vector3(0, 0.6, 0), 50.0, 0.08)
+		&"thunder_mage":
+			for side: StringName in [&"RightHand", &"LeftHand"]:
+				var w := _hand(side)
+				if w:
+					add_mesh("", w, sphere(0.07, -1, 10), glow_mat(Color(0.6, 0.85, 1.0), 1.6), Vector3(0, 0.1, 0), Vector3.ZERO, Vector3.ONE, false)
+					add_particles("spark_" + String(side), w, Color(0.6, 0.85, 1.0), 10, 0.3, 0.08, Vector3(0, 0.8, 0), 90.0, 0.08)
+			var tip := _hand(&"RightHand")
+			if tip:
+				pivot("orb", tip, Vector3(0, 0.12, 0))
+		&"healing_fairy":
+			var w := _hand(&"RightHand")
+			if w:
+				add_mesh("", w, cyl(0.012, 0.012, 0.3, 6), mat(Color("#f4e2b0"), 0.4), Vector3(0, 0.12, 0))
+				var star := pivot("orb", w, Vector3(0, 0.3, 0))
+				add_mesh("", star, sphere(0.06, -1, 10), glow_mat(Color(1.0, 0.95, 0.5), 1.6), Vector3.ZERO, Vector3.ZERO, Vector3.ONE, false)
+				add_particles("star_fx", star, Color(1, 0.9, 0.6), 10, 0.7, 0.07, Vector3(0, 0.4, 0), 70.0, 0.06)
+			add_particles("fairy_dust", parts["glb"], Color(1.0, 0.75, 0.9), 12, 1.0, 0.09, Vector3(0, -0.5, 0), 50.0, 0.3)
+		&"goblin_gang":
+			var w := _hand(&"RightHand")
+			if w:
+				add_mesh("", w, cyl(0.018, 0.018, 0.75, 6), mat(Color("#7a5230"), 0.8), Vector3(0, 0.15, 0))
+				add_mesh("", w, cyl(0.0, 0.05, 0.14, 6), mat(Color("#b9c3d1"), 0.3, 0, 0.7), Vector3(0, 0.58, 0))
+		&"viking_berserker":
+			var w := _hand(&"RightHand")
+			if w:
+				add_mesh("", w, cyl(0.025, 0.025, 0.7, 8), mat(Color("#6b4226"), 0.8), Vector3(0, 0.15, 0))
+				for sd: float in [-1.0, 1.0]:
+					add_mesh("", w, sphere(0.17, 0.3, 12), mat(Color("#8e99a8"), 0.3, 0, 0.85), Vector3(0.12 * sd, 0.45, 0), Vector3.ZERO, Vector3(0.65, 1.15, 0.14))
+		&"bomb_pirate":
+			var w := _hand(&"RightHand")
+			if w:
+				add_mesh("", w, sphere(0.12, -1, 12), mat(Color("#1d1d24"), 0.3, 0, 0.3), Vector3(0, 0.1, 0.02))
+				var fuse := pivot("orb", w, Vector3(0, 0.25, 0.02))
+				add_particles("fuse", fuse, Color(1.0, 0.7, 0.2), 10, 0.3, 0.06, Vector3(0, 0.8, 0), 60.0, 0.02)
 		&"frost_dragon":
 			add_particles("frost", parts["glb"], Color(0.7, 0.95, 1.0), 10, 1.0, 0.1, Vector3(0, -0.6, 0), 60.0, 0.3)
 		&"stone_golem":
@@ -196,6 +235,9 @@ func pose(dt: float) -> void:
 	if death_t >= 0.0:
 		_play("death", float(_anim_len.get("death", 1.6)) / death_len)
 		return
+	if spawn_t >= 0.0 and _anim_len.has("spawn"):
+		_play("spawn", float(_anim_len.get("spawn", 1.0)) / spawn_len)
+		return
 	var p := attack_progress()
 	if p >= 0.0:
 		var new_attack := attack_t < _last_attack_t or _current != "m/attack"
@@ -214,7 +256,7 @@ func pose(dt: float) -> void:
 	if _current == "m/hit" and _hit_anim_t < 0.45:
 		return
 	if moving and not bool(_setup.get("fly", false)):
-		var clip := "run" if bool(_setup.get("run", false)) else "walk"
+		var clip := "run" if bool(_setup.get("run", false)) or charging else "walk"
 		_play(clip, move_speed_factor * clampf(walk_rate, 0.6, 2.0))
 	else:
 		_play("idle")

@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/MonsterData.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+id = &"bomb_pirate"
+display_name = "Bomb Pirate"
+role = "Area Thrower"
+description = "A jolly pirate who lobs bombs over enemy troops. Great against swarms, but can't hit air."
+rarity = 0
+elixir_cost = 3
+accent_color = Color(0.95, 0.3, 0.25, 1)
+max_hp = 420.0
+damage = 150.0
+attack_speed = 1.9
+attack_range = 5.0
+sight_range = 6.0
+move_speed = 1.3
+target_type = 0
+can_hit_air = false
+is_flying = false
+splash_radius = 1.4
+projectile = 4
+projectile_speed = 7
+radius = 0.42
+mass = 1.0
+model_scale = 1.0
+model_glb_path = "res://Assets/Monsters/bomb_pirate/bomb_pirate_rigged.glb"
+sfx_attack = &"bomb_throw"
+

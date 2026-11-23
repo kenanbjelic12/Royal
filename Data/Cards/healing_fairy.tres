@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/MonsterData.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+id = &"healing_fairy"
+display_name = "Healing Fairy"
+role = "Flying Healer"
+description = "A kind little fairy who flies behind your army and heals every ally around her."
+rarity = 1
+elixir_cost = 4
+accent_color = Color(1, 0.6, 0.85, 1)
+max_hp = 600.0
+damage = 0.0
+attack_speed = 1.2
+attack_range = 3.0
+sight_range = 8.0
+move_speed = 1.6
+target_type = 2
+can_hit_air = false
+is_flying = true
+splash_radius = 0
+projectile = 0
+projectile_speed = 9
+radius = 0.4
+mass = 1.0
+model_scale = 1.0
+model_glb_path = "res://Assets/Monsters/healing_fairy/healing_fairy_rigged.glb"
+sfx_attack = &"heal_chime"
+heal_amount = 70.0
+heal_radius = 2.6

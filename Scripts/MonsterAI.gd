@@ -12,10 +12,17 @@ var _retarget_timer := 0.0
 func _init(owner_unit: Node) -> void:
 	unit = owner_unit
 
+func is_healer() -> bool:
+	return unit.data.target_type == MonsterData.TargetType.HEAL_ALLIES
+
 func can_target(c: Combatant) -> bool:
-	if c == null or not c.is_alive() or c.team == unit.team:
+	if c == null or not c.is_alive():
 		return false
 	var d: MonsterData = unit.data
+	if is_healer():
+		return c.team == unit.team and c != unit and not c.is_building and not (c is MonsterController and (c as MonsterController).data.target_type == MonsterData.TargetType.HEAL_ALLIES)
+	if c.team == unit.team:
+		return false
 	if d.target_type == MonsterData.TargetType.BUILDINGS_ONLY:
 		return c.is_building
 	if c.is_flying and not d.can_hit_air:
@@ -38,6 +45,9 @@ func update(delta: float) -> void:
 	if _retarget_timer > 0.0:
 		return
 	_retarget_timer = RETARGET_INTERVAL
+	if is_healer():
+		target = find_ally_to_follow()
+		return
 	# Locked on a troop or attacking a building -> keep it (Clash-style lock-on).
 	if target != null:
 		if not target.is_building:
@@ -49,6 +59,21 @@ func update(delta: float) -> void:
 	if best == null:
 		best = find_building_target()
 	target = best
+
+## Healers follow the most valuable ally: damaged and furthest forward.
+func find_ally_to_follow() -> Combatant:
+	var best: Combatant = null
+	var best_score := -INF
+	var fwd := ArenaLayout.forward_sign(unit.team)
+	for u: MonsterController in unit.battle.get_units(unit.team):
+		if not can_target(u):
+			continue
+		var s := u.ground_pos().z * fwd * 0.4 + (1.0 - u.hp / u.max_hp) * 6.0 + u.data.elixir_cost * 0.3
+		s -= unit.ground_pos().distance_to(u.ground_pos()) * 0.25
+		if s > best_score:
+			best_score = s
+			best = u
+	return best
 
 func find_troop_target() -> Combatant:
 	if unit.data.target_type == MonsterData.TargetType.BUILDINGS_ONLY:

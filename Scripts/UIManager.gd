@@ -27,6 +27,8 @@ var _dragging := false
 var _press_pos := Vector2.ZERO
 var _was_selected := false
 var _pause_layer: Control
+var _next_view: CardView
+var _next_label: Label
 
 func _ready() -> void:
 	layer = 5
@@ -152,6 +154,11 @@ func _build_bottom() -> void:
 		cv.gui_input.connect(_on_card_input.bind(i))
 		_hand_root.add_child(cv)
 		cards.append(cv)
+	# next card in the cycle
+	_next_label = UIStyle.label("Next", 16, Color("#c9d4ff"), 4)
+	_hand_root.add_child(_next_label)
+	_make_next_view()
+	cm.hand_changed.connect(_refresh_slot)
 	# elixir bar
 	var bar := Control.new()
 	bar.name = "ElixirBar"
@@ -213,6 +220,36 @@ func _build_preview() -> void:
 	_preview_stats = UIStyle.label("", 14, Color("#e6ecff"), 4)
 	_preview.add_child(_preview_stats)
 
+func _make_next_view() -> void:
+	if _next_view:
+		_next_view.queue_free()
+	var nd: MonsterData = battle.card_manager.cycle.next_card()
+	if nd == null:
+		_next_view = null
+		return
+	_next_view = CardView.new().setup(nd, battle.card_level(0, nd))
+	_next_view.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_next_view.show_level = false
+	_hand_root.add_child(_next_view)
+
+## A slot was played: the next card slides in and the Next preview updates.
+func _refresh_slot(i: int) -> void:
+	var old := cards[i]
+	var d: MonsterData = battle.card_manager.hand[i]
+	var cv := CardView.new().setup(d, battle.card_level(0, d))
+	cv.lift_enabled = true
+	cv.gui_input.connect(_on_card_input.bind(i))
+	_hand_root.add_child(cv)
+	cards[i] = cv
+	old.queue_free()
+	_make_next_view()
+	_layout()
+	cv.modulate.a = 0.0
+	cv.scale = Vector2(0.6, 0.6)
+	var tw := cv.create_tween().set_parallel(true)
+	tw.tween_property(cv, "modulate:a", 1.0, 0.2)
+	tw.tween_property(cv, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
 # ------------------------------------------------------------------ layout
 func _layout() -> void:
 	var vp := root.get_viewport_rect().size
@@ -227,16 +264,25 @@ func _layout() -> void:
 	var n := maxi(cards.size(), 1)
 	var bar_h := clampf(bh * 0.17, 34, 54)
 	var avail_h := bh - bar_h - margin * 3
-	var cw := minf((minf(vp.x, 900.0) - margin * 2 - gap * (n - 1)) / n, avail_h / 1.27)
+	var next_k := 0.62   # the Next card is drawn smaller, left of the hand
+	var cw := minf((minf(vp.x, 900.0) - margin * 2 - gap * n) / (n + next_k), avail_h / 1.27)
 	var ch := cw * 1.27
-	var total_w := cw * n + gap * (n - 1)
+	var total_w := cw * (n + next_k) + gap * n
 	var x0 := (vp.x - total_w) * 0.5
+	var hand_x := x0 + cw * next_k + gap
 	for i in cards.size():
 		var cv := cards[i]
 		cv.custom_minimum_size = Vector2(cw, ch)
 		cv.size = Vector2(cw, ch)
-		cv.base_position = Vector2(x0 + i * (cw + gap), margin + 6)
+		cv.base_position = Vector2(hand_x + i * (cw + gap), margin + 6)
 		cv.position = cv.base_position
+	if _next_view:
+		var ns := Vector2(cw * next_k, ch * next_k)
+		_next_view.custom_minimum_size = ns
+		_next_view.size = ns
+		_next_view.position = Vector2(x0, margin + 6 + ch - ns.y)
+		_next_label.size = Vector2(ns.x, 22)
+		_next_label.position = Vector2(x0, _next_view.position.y - 24)
 	var bar: Control = _bottom.get_node("ElixirBar")
 	bar.size = Vector2(total_w - bar_h * 0.6, bar_h)
 	var cards_bottom := margin + 6 + ch

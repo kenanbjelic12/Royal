@@ -12,10 +12,16 @@ const CLIPS := {
 	"hit": ["anim_hit.glb", false],
 	"death": ["anim_death.glb", false],
 	"select": ["anim_select.glb", false],
+	"spawn": ["anim_spawn.glb", false],
 }
 
 func _ready() -> void:
-	for id in ["fire_knight", "shadow_assassin", "stone_golem", "frost_dragon", "poison_witch"]:
+	var ids := ["fire_knight", "shadow_assassin", "stone_golem", "frost_dragon", "poison_witch",
+		"thunder_mage", "healing_fairy", "goblin_gang", "viking_berserker", "bomb_pirate"]
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("ids="):
+			ids = Array(a.substr(4).split(","))
+	for id in ids:
 		var dir: String = "res://Assets/Monsters/%s/" % id
 		var lib := AnimationLibrary.new()
 		for clip in CLIPS:

@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/MonsterData.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+id = &"goblin_gang"
+display_name = "Goblin Gang"
+role = "Swarm"
+description = "Three cheeky goblins with spears. Cheap, fast and great at surrounding big tanks."
+rarity = 0
+elixir_cost = 2
+accent_color = Color(0.5, 0.9, 0.3, 1)
+max_hp = 220.0
+damage = 70.0
+attack_speed = 1.0
+attack_range = 0.7
+sight_range = 5.5
+move_speed = 2.4
+target_type = 0
+can_hit_air = false
+is_flying = false
+splash_radius = 0
+projectile = 0
+projectile_speed = 9
+radius = 0.33
+mass = 0.6
+model_scale = 1.0
+model_glb_path = "res://Assets/Monsters/goblin_gang/goblin_gang_rigged.glb"
+sfx_attack = &"spear_stab"
+spawn_count = 3
+spawn_spread = 0.65

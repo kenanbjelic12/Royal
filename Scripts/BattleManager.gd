@@ -175,7 +175,15 @@ func deploy_card(team: int, data: MonsterData, pos: Vector3) -> bool:
 		return false
 	if not elixir[team].spend(data.elixir_cost):
 		return false
-	spawn_monster(data, team, pos, card_level(team, data))
+	var lvl := card_level(team, data)
+	if data.spawn_count <= 1:
+		spawn_monster(data, team, pos, lvl)
+	else:
+		# swarm: a small formation around the tapped point
+		for i in data.spawn_count:
+			var a := TAU * i / data.spawn_count + PI * 0.5
+			var off := Vector3(cos(a), 0, sin(a)) * data.spawn_spread
+			spawn_monster(data, team, pos + off, lvl, i > 0)
 	stats.cards_played[team][data.id] = stats.cards_played[team].get(data.id, 0) + 1
 	if team == 0 and not player_ai_controlled:
 		EconomyManager.add_quest_progress("deploy", 1)
@@ -184,7 +192,7 @@ func deploy_card(team: int, data: MonsterData, pos: Vector3) -> bool:
 		SettingsManager.vibrate(25)
 	return true
 
-func spawn_monster(data: MonsterData, team: int, pos: Vector3, lvl := 1) -> MonsterController:
+func spawn_monster(data: MonsterData, team: int, pos: Vector3, lvl := 1, quiet := false) -> MonsterController:
 	var m := MonsterController.new()
 	m.setup(data, team, lvl, self)
 	m.name = "%s_%s_%d" % [data.id, team, stats.spawned[team]]
@@ -193,8 +201,10 @@ func spawn_monster(data: MonsterData, team: int, pos: Vector3, lvl := 1) -> Mons
 	units.append(m)
 	stats.spawned[team] += 1
 	m.died.connect(_on_unit_died)
-	VFX.spawn_effect(effects, m.position, team_color(team))
-	AudioManager.play(data.sfx_deploy)
+	if not quiet:
+		VFX.spawn_effect(effects, m.position, team_color(team))
+		AudioManager.play(data.sfx_deploy)
+	m.quiet_spawn = quiet
 	unit_spawned.emit(m)
 	return m
 
@@ -225,6 +235,31 @@ func show_damage(c: Combatant, amount: float) -> void:
 		return
 	var col := Color("#fff4c2") if c.is_building else (Color("#9fd0ff") if c.team == 0 else Color("#ffb3b3"))
 	VFX.damage_number(effects, c.aim_point() + Vector3(0, 0.9 if c.is_building else 0.5, 0), amount, col, c.is_building)
+
+## Instant lightning that jumps to `extra` more enemies near the last one hit.
+func chain_lightning(source: Combatant, from: Vector3, first: Combatant, dmg: float, extra: int, jump: float, hits_air: bool) -> void:
+	var hit: Array = []
+	var cur := first
+	var p := from
+	for i in extra + 1:
+		if cur == null or not is_instance_valid(cur) or not cur.is_alive():
+			break
+		VFX.lightning_bolt(effects, p, cur.aim_point())
+		VFX.lightning_hit(effects, cur.aim_point())
+		cur.take_damage(dmg, source)
+		hit.append(cur)
+		p = cur.aim_point()
+		var nxt: Combatant = null
+		var best := INF
+		for c: Combatant in get_enemies_of(source.team):
+			if hit.has(c) or (c.is_flying and not hits_air):
+				continue
+			var d := c.ground_pos().distance_to(cur.ground_pos())
+			if d <= jump and d < best:
+				best = d
+				nxt = c
+		cur = nxt
+	AudioManager.play(&"lightning_hit")
 
 func shake_camera(amp: float, dur: float) -> void:
 	if camera:
@@ -363,6 +398,7 @@ func _finish(winner: int, reason: String) -> void:
 	for u in units:
 		if is_instance_valid(u) and u.model:
 			u.model.set_moving(false)
+			u.model.celebrating = u.team == winner and u.is_alive()
 	result = {
 		"winner": winner, "won": winner == 0, "draw": winner == -1, "reason": reason,
 		"crowns_player": crowns[0], "crowns_enemy": crowns[1],

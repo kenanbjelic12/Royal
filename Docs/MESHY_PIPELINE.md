@@ -22,6 +22,18 @@ Animation clips (Meshy library action ids):
 | Frost Dragon | 12 Idle 2 | 125 Charged Spell Cast | 178 Hit Reaction | 8 Dead | 59 Victory Cheer |
 | Poison Witch | 11 Idle 1 | 129 Mage Spell Cast | 173 Slap Reaction | 185 Shot and Slow Fall Backward | 44 Happy Jump Female |
 
+### Wave 2 (5 more monsters, 6 clips each incl. a spawn/entrance clip)
+
+| Monster | idle | attack | hit | death | select | spawn |
+|---|---|---|---|---|---|---|
+| Thunder Mage | 0 Idle | 126 Charged Spell Cast 1 | 178 | 189 | 73 Fast Lightning | 460 Jump with Arms Open |
+| Healing Fairy | 11 Idle 1 | 131 Mage Spell Cast 2 | 179 | 185 | 44 Happy Jump Female | 461 Jump Arms & Legs Open |
+| Goblin Gang | 89 Combat Idle | 240 Thrust Slash | 174 | 187 | 26 Angry Stomp | 470 Jumping Down |
+| Viking Berserker | 85 Axe Stance | 237 Charged Axe Chop | 178 | 8 | 255 Angry Ground Stomp | 382 Jump and Slam Back Down |
+| Bomb Pirate | 0 Idle | 398 Crouch Charge and Throw | 173 | 183 | 298 Cheer with Both Hands Up | 466 Regular Jump |
+
+Credits for wave 2: 5 x (20 + 10 + 5 + 18) = 265.
+
 In the project:
 - `Assets/Monsters/<id>/<id>_rigged.glb`: rigged, textured character (textures VRAM-compressed, max 1024 px).
 - `Assets/Monsters/<id>/<id>_anims.res`: AnimationLibrary built by `Tools/MeshyImport.tscn`

@@ -5,8 +5,8 @@ extends Resource
 ## are needed except a model builder script (or a GLB path) for its visuals.
 
 enum Rarity { COMMON, RARE, EPIC, LEGENDARY }
-enum TargetType { ANY, BUILDINGS_ONLY }
-enum ProjectileType { NONE, ICE_SHARD, POISON_ORB }
+enum TargetType { ANY, BUILDINGS_ONLY, HEAL_ALLIES }
+enum ProjectileType { NONE, ICE_SHARD, POISON_ORB, LIGHTNING, BOMB, ARROW_SHOT }
 
 @export_group("Card")
 @export var id: StringName = &""
@@ -35,7 +35,22 @@ enum ProjectileType { NONE, ICE_SHARD, POISON_ORB }
 @export var projectile: ProjectileType = ProjectileType.NONE
 @export var projectile_speed: float = 9.0
 
+@export_group("Spawning")
+## How many monsters one card summons (swarms).
+@export var spawn_count: int = 1
+@export var spawn_spread: float = 0.7
+
 @export_group("Special effects")
+## Chain lightning: extra targets hit after the first one.
+@export var chain_targets: int = 0
+@export var chain_range: float = 2.5
+## Healers: HP restored per pulse to allies within heal_radius.
+@export var heal_amount: float = 0.0
+@export var heal_radius: float = 0.0
+## Charge: after moving this far without a target the unit sprints.
+@export var charge_distance: float = 0.0
+@export var charge_speed_multiplier: float = 2.0
+@export var charge_damage_multiplier: float = 2.0
 ## Fraction of speed removed from the target (0.35 = 35% slower).
 @export var slow_amount: float = 0.0
 @export var slow_duration: float = 0.0
@@ -91,4 +106,5 @@ func range_label() -> String:
 
 func targets_label() -> String:
 	if target_type == TargetType.BUILDINGS_ONLY: return "Buildings"
+	if target_type == TargetType.HEAL_ALLIES: return "Heals allies"
 	return "Air & Ground" if can_hit_air else "Ground"

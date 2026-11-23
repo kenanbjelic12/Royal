@@ -4,7 +4,7 @@ extends Node3D
 ## `info` keys: type, from, target, speed, damage, team, source, splash,
 ## hits_air, hits_ground, slow, slow_time, poison, poison_time.
 
-enum Kind { ARROW = 100, CANNONBALL = 101, ICE_SHARD = 1, POISON_ORB = 2 }
+enum Kind { ARROW = 100, CANNONBALL = 101, ICE_SHARD = 1, POISON_ORB = 2, LIGHTNING = 3, BOMB = 4 }
 
 var info: Dictionary
 var battle: Node
@@ -31,6 +31,7 @@ func setup(p_info: Dictionary, p_battle: Node) -> void:
 	match kind:
 		Kind.CANNONBALL: _arc = 0.6
 		Kind.POISON_ORB: _arc = 0.9
+		Kind.BOMB: _arc = 1.8
 		Kind.ARROW: _arc = 0.35
 
 func _ready() -> void:
@@ -55,7 +56,7 @@ func _process(delta: float) -> void:
 	var look_dir := dir + Vector3(0, _arc_slope(), 0)
 	if look_dir.length() > 0.01 and absf(look_dir.normalized().dot(Vector3.UP)) < 0.99:
 		look_at(global_position + look_dir, Vector3.UP)
-	if kind == Kind.ICE_SHARD or kind == Kind.POISON_ORB:
+	if kind == Kind.ICE_SHARD or kind == Kind.POISON_ORB or kind == Kind.BOMB:
 		_visual.rotate_object_local(Vector3.FORWARD, delta * 10.0)
 
 func _arc_offset() -> float:
@@ -90,6 +91,10 @@ func _hit() -> void:
 		Kind.POISON_ORB:
 			VFX.poison_hit(fx, p)
 			AudioManager.play(&"poison_hit")
+		Kind.BOMB:
+			VFX.bomb_explosion(fx, p, splash)
+			AudioManager.play(&"bomb_explode")
+			battle.shake_camera(0.1, 0.2)
 		Kind.CANNONBALL:
 			VFX.cannon_hit(fx, p)
 			AudioManager.play(&"cannon_hit")
@@ -110,6 +115,13 @@ func _make_visual() -> Node3D:
 			s.height = 0.4
 			_add(root, s, _mat(Color("#2b2b33"), 0.0, 0.4))
 			VFX.trail(root, Color(0.7, 0.7, 0.7, 0.6), 0.25, false)
+		Kind.BOMB:
+			var s := SphereMesh.new()
+			s.radius = 0.2
+			s.height = 0.4
+			_add(root, s, _mat(Color("#1d1d24"), 0.3, 0.3))
+			_add(root, _cyl(0.03, 0.12), _mat(Color("#8a6a3a")), Vector3(0, 0.22, 0))
+			VFX.trail(root, Color(1.0, 0.7, 0.2), 0.14)
 		Kind.ICE_SHARD:
 			var c := _cone(0.13, 0.55)
 			_add(root, c, _glow(Color(0.55, 0.95, 1.0), 1.8), Vector3.ZERO, Vector3(-90, 0, 0))

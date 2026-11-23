@@ -39,6 +39,7 @@ var battles := 0
 var quests: Dictionary = {}         # id -> {progress, claimed, day}
 var shop_day := ""
 var shop_bought: Dictionary = {}
+var deck: Array = []                # 8 card ids chosen in the Cards menu
 
 func _ready() -> void:
 	load_game()
@@ -63,6 +64,7 @@ func load_game() -> void:
 		quests = cfg.get_value("quests", "state", {})
 		shop_day = cfg.get_value("shop", "day", "")
 		shop_bought = cfg.get_value("shop", "bought", {})
+		deck = cfg.get_value("cards", "deck", [])
 
 func save_game() -> void:
 	changed.emit()
@@ -80,6 +82,7 @@ func save_game() -> void:
 	cfg.set_value("player", "battles", battles)
 	cfg.set_value("cards", "levels", card_levels)
 	cfg.set_value("cards", "copies", card_copies)
+	cfg.set_value("cards", "deck", deck)
 	cfg.set_value("chests", "slots", chests)
 	cfg.set_value("chests", "cycle", chest_cycle_index)
 	cfg.set_value("quests", "state", quests)
@@ -104,6 +107,7 @@ func reset_profile() -> void:
 	quests = {}
 	shop_day = ""
 	shop_bought = {}
+	deck = []
 	save_game()
 
 # ------------------------------------------------------------------ currencies
@@ -175,6 +179,22 @@ func upgrade_card(id: StringName) -> bool:
 	add_xp(4 * get_card_level(id))
 	save_game()
 	return true
+
+## Puts `card_id` into the battle deck in place of `replace_id`.
+func swap_deck_card(card_id: StringName, replace_id: StringName) -> bool:
+	if deck.is_empty():
+		deck = CardDatabase.DEFAULT_DECK.map(func(x): return String(x))
+	var i := deck.find(String(replace_id))
+	if i < 0 or deck.has(String(card_id)):
+		return false
+	deck[i] = String(card_id)
+	save_game()
+	return true
+
+func deck_ids() -> Array:
+	if deck.size() < CardDatabase.DECK_SIZE:
+		return CardDatabase.DEFAULT_DECK.map(func(x): return String(x))
+	return deck
 
 # ------------------------------------------------------------------ chests
 func award_chest() -> String:

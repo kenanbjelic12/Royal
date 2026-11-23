@@ -59,18 +59,31 @@ func _run_all() -> void:
 func test_cards_display() -> void:
 	current = "1. Cards display"
 	var deck := CardDatabase.deck()
-	check("5 cards loaded from data files", deck.size() == 5, "got %d" % deck.size())
+	check("10 cards loaded from data files", deck.size() == 10, "got %d" % deck.size())
 	var ids := deck.map(func(d): return String(d.id))
-	check("expected card ids", ids == ["fire_knight", "shadow_assassin", "stone_golem", "frost_dragon", "poison_witch"], str(ids))
+	check("expected card ids", ids.slice(0, 5) == ["fire_knight", "shadow_assassin", "stone_golem", "frost_dragon", "poison_witch"] and ids.has("thunder_mage") and ids.has("healing_fairy") and ids.has("goblin_gang") and ids.has("viking_berserker") and ids.has("bomb_pirate"), str(ids))
+	check("battle deck has 8 cards", CardDatabase.battle_deck().size() == 8)
 	for d: MonsterData in deck:
 		check("%s has portrait illustration" % d.id, d.portrait != null)
 	var costs := deck.map(func(d): return d.elixir_cost)
-	check("elixir costs 5/3/6/4/4", costs == [5, 3, 6, 4, 4], str(costs))
+	check("elixir costs 5/3/6/4/4/5/4/2/4/3", costs == [5, 3, 6, 4, 4, 5, 4, 2, 4, 3], str(costs))
 	await new_battle(false, false, true)
 	var hud: UIManager = battle.hud
 	check("HUD shows 5 card widgets", hud.cards.size() == 5)
+	var bd := CardDatabase.battle_deck()
 	for i in hud.cards.size():
-		check("card slot %d shows %s" % [i, deck[i].id], hud.cards[i].data == deck[i] and hud.cards[i].is_visible_in_tree())
+		check("card slot %d shows a battle-deck card" % i, bd.has(hud.cards[i].data) and hud.cards[i].data == battle.card_manager.hand[i] and hud.cards[i].is_visible_in_tree())
+	check("HUD shows the Next card", hud._next_view != null and hud._next_view.data == battle.card_manager.cycle.next_card())
+	# cycling: playing a card brings the next one into that slot
+	var cm := battle.card_manager
+	var nxt: MonsterData = cm.cycle.next_card()
+	var played: MonsterData = cm.hand[0]
+	battle.elixir[0].elixir = 10.0
+	cm.select(0)
+	cm.try_deploy_world(Vector3(0, 0, 6))
+	await get_tree().process_frame
+	check("played card is replaced by the Next card", cm.hand[0] == nxt and cm.cycle.queue.back() == played)
+	check("HUD slot updates after cycling", hud.cards[0].data == nxt)
 
 # 2 ---------------------------------------------------------------------------
 func test_card_summons() -> void:
@@ -81,6 +94,7 @@ func test_card_summons() -> void:
 		var before := battle.units.size()
 		var ok := battle.deploy_card(0, d, Vector3(-3, 0, 8))
 		var spent := 10.0 - battle.elixir[0].elixir
+		check("%s summons %d monster(s)" % [d.id, d.spawn_count], battle.units.size() - before == d.spawn_count)
 		var unit: MonsterController = battle.units.back() if battle.units.size() > before else null
 		check("%s deploys" % d.id, ok and unit != null)
 		if unit:
@@ -106,6 +120,8 @@ func test_movement() -> void:
 	current = "3. Movement & bridges"
 	for d: MonsterData in CardDatabase.deck():
 		await new_battle()
+		if d.target_type == MonsterData.TargetType.HEAL_ALLIES:
+			battle.spawn_monster(CardDatabase.get_card(&"stone_golem"), 0, Vector3(-2.5, 0, 7.5), 1)   # a friend to follow
 		var u := battle.spawn_monster(d, 0, Vector3(-2.5, 0, 9), 1)
 		var start := u.position
 		var crossed_on_bridge := true
@@ -125,7 +141,7 @@ func test_movement() -> void:
 		check("%s reaches enemy half" % d.id, reached_enemy_half, "z=%.2f after %.1fs" % [u.position.z if is_instance_valid(u) else 99.0, t])
 		if not d.is_flying:
 			check("%s crosses only via a bridge" % d.id, crossed_on_bridge)
-		else:
+		elif d.target_type != MonsterData.TargetType.HEAL_ALLIES:
 			check("%s flies straight over the river" % d.id, absf(u.position.x - start.x) < 2.5)
 		if is_instance_valid(u):
 			check("%s walk animation active" % d.id, u.model.move_blend > 0.5)
@@ -135,6 +151,8 @@ func test_attacks_and_damage() -> void:
 	current = "4/5. Unique attacks & HP"
 	var signatures := {}
 	for d: MonsterData in CardDatabase.deck():
+		if d.target_type == MonsterData.TargetType.HEAL_ALLIES:
+			continue
 		await new_battle()
 		# placed in the middle of the player half, out of every tower's range
 		var attacker := battle.spawn_monster(d, 0, Vector3(-3, 0, 2.0), 1)
@@ -170,8 +188,8 @@ func test_attacks_and_damage() -> void:
 		check("%s reduces target HP" % d.id, victim.hp < hp0, "hp %.0f -> %.0f" % [hp0, victim.hp])
 		if d.target_type != MonsterData.TargetType.BUILDINGS_ONLY:
 			check("%s first hit deals %.0f" % [d.id, expected], absf((hp0 - hp_after_first) - expected) < 1.0 or d.poison_dps > 0.0, "dealt %.0f" % (hp0 - hp_after_first))
-		var ranged := d.projectile != MonsterData.ProjectileType.NONE
-		check("%s %s" % [d.id, "fires projectiles" if ranged else "attacks in melee"], (projectiles_seen > 0) == ranged)
+		var ranged := d.projectile != MonsterData.ProjectileType.NONE and d.projectile != MonsterData.ProjectileType.LIGHTNING
+		check("%s %s" % [d.id, "fires projectiles" if ranged else "hits instantly (melee / lightning)"], (projectiles_seen > 0) == ranged)
 		if d.slow_amount > 0.0:
 			check("%s slows its target" % d.id, victim.slow_time > 0.0 or not victim.is_alive())
 		if d.poison_dps > 0.0:
@@ -180,7 +198,48 @@ func test_attacks_and_damage() -> void:
 	var uniq := {}
 	for k in signatures:
 		uniq[signatures[k]] = true
-	check("all 5 attack profiles are different", uniq.size() == 5)
+	check("all attack profiles are different", uniq.size() == signatures.size())
+	# chain lightning hits several clustered enemies
+	await new_battle()
+	var mage := battle.spawn_monster(CardDatabase.get_card(&"thunder_mage"), 0, Vector3(-3, 0, 2.0), 1)
+	var group: Array = []
+	for k in 3:
+		var dd: MonsterData = CardDatabase.get_card(&"stone_golem").duplicate()
+		dd.damage = 0.0
+		dd.move_speed = 0.0
+		group.append(battle.spawn_monster(dd, 1, Vector3(2.0 + k * 1.2, 0, 2.0), 1))
+	await sim(4.0)
+	check("thunder mage lightning chains to 3 enemies", group.all(func(g): return g.hp < g.max_hp))
+	# berserker charge doubles the first hit
+	await new_battle()
+	var vk := battle.spawn_monster(CardDatabase.get_card(&"viking_berserker"), 0, Vector3(-4, 0, 2.0), 1)
+	var vd: MonsterData = CardDatabase.get_card(&"stone_golem").duplicate()
+	vd.damage = 0.0
+	vd.move_speed = 0.0
+	vd.target_type = MonsterData.TargetType.BUILDINGS_ONLY
+	var tgt := battle.spawn_monster(vd, 1, Vector3(1.5, 0, 2.0), 1)
+	var charged_seen := [false]
+	var hp_start := tgt.hp
+	var tt := 0.0
+	while tt < 8.0 and tgt.hp == hp_start:
+		await sim(0.05)
+		tt += 0.05
+		if vk.charging:
+			charged_seen[0] = true
+	check("berserker starts charging after a run-up", charged_seen[0])
+	check("charged first hit deals double damage", absf((hp_start - tgt.hp) - vk.data.damage_at(1) * 2.0) < 1.0, "dealt %.0f" % (hp_start - tgt.hp))
+	# healer restores HP of nearby allies
+	await new_battle()
+	var ally := battle.spawn_monster(CardDatabase.get_card(&"fire_knight"), 0, Vector3(-3, 0, 6.0), 1)
+	ally.data = ally.data.duplicate()
+	ally.data.move_speed = 0.0
+	var fairy := battle.spawn_monster(CardDatabase.get_card(&"healing_fairy"), 0, Vector3(-3, 0, 7.5), 1)
+	await sim(1.2)
+	ally.hp = ally.max_hp * 0.5
+	var hp_mid := ally.hp
+	await sim(3.0)
+	check("healing fairy heals a damaged ally", ally.hp > hp_mid, "hp %.0f -> %.0f" % [hp_mid, ally.hp])
+	check("healing fairy never damages allies", fairy.is_alive())
 	# death
 	await new_battle()
 	var u := battle.spawn_monster(CardDatabase.get_card(&"shadow_assassin"), 0, Vector3(0, 0, 6), 1)
@@ -277,7 +336,7 @@ func test_ai_uses_cards() -> void:
 		for team in 2:
 			for k in battle.stats.cards_played[team]:
 				used[k] = true
-	check("AI uses all 5 cards across games", used.size() == 5, str(used.keys()))
+	check("AI uses at least 6 different cards across games", used.size() >= 6, str(used.keys()))
 
 # 9 ---------------------------------------------------------------------------
 func test_win_lose() -> void:

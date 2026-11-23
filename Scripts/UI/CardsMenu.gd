@@ -5,6 +5,9 @@ extends Control
 ## targets) and a working Upgrade button (copies + gold).
 
 var _grid: GridContainer
+var _deck_grid: GridContainer
+var _info: Label
+var _swap_card: MonsterData
 var _detail: UIPopup
 var _preview_model: MonsterModel
 
@@ -32,35 +35,77 @@ func _ready() -> void:
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(title)
 	top.add_child(CurrencyBar.new())
-	var info := UIStyle.label("Collection %d / %d   ·   Tap a card for details" % [CardDatabase.cards.size(), CardDatabase.cards.size()], 20, Color("#c9d4ff"), 4)
-	root.add_child(info)
+	_info = UIStyle.label("Tap a card for details · build your 8-card battle deck", 20, Color("#c9d4ff"), 4)
+	_info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	root.add_child(_info)
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	root.add_child(scroll)
-	var center := CenterContainer.new()
-	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(center)
-	_grid = GridContainer.new()
-	_grid.columns = 3
-	_grid.add_theme_constant_override("h_separation", 18)
-	_grid.add_theme_constant_override("v_separation", 22)
-	center.add_child(_grid)
+	var col := VBoxContainer.new()
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.add_theme_constant_override("separation", 14)
+	scroll.add_child(col)
+	col.add_child(UIStyle.label("Battle Deck", 30, Color.WHITE, 7))
+	_deck_grid = _make_grid(col)
+	col.add_child(UIStyle.label("Collection", 30, Color.WHITE, 7))
+	_grid = _make_grid(col)
 	_fill()
 
+func _make_grid(parent: Container) -> GridContainer:
+	var center := CenterContainer.new()
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	parent.add_child(center)
+	var g := GridContainer.new()
+	g.columns = 4
+	g.add_theme_constant_override("h_separation", 12)
+	g.add_theme_constant_override("v_separation", 16)
+	center.add_child(g)
+	return g
+
 func _fill() -> void:
-	for c in _grid.get_children():
-		c.queue_free()
+	for g in [_grid, _deck_grid]:
+		for c in g.get_children():
+			g.remove_child(c)
+			c.queue_free()
+	var deck_ids: Array = EconomyManager.deck_ids()
+	for d in CardDatabase.cards_for(deck_ids):
+		_deck_grid.add_child(_card_cell(d, true))
 	for d in CardDatabase.deck():
-		var v := VBoxContainer.new()
-		v.add_theme_constant_override("separation", 6)
-		var cv := CardView.new().setup(d, EconomyManager.get_card_level(d.id))
-		cv.custom_minimum_size = Vector2(190, 242)
-		cv.name = "Card_" + String(d.id)
-		cv.pressed.connect(func(_c): open_detail(d))
-		v.add_child(cv)
-		v.add_child(_copies_bar(d))
-		_grid.add_child(v)
+		if not deck_ids.has(String(d.id)):
+			_grid.add_child(_card_cell(d, false))
+
+func _card_cell(d: MonsterData, in_deck: bool) -> Control:
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 6)
+	var cv := CardView.new().setup(d, EconomyManager.get_card_level(d.id))
+	cv.custom_minimum_size = Vector2(150, 191)
+	cv.name = "Card_" + String(d.id)
+	cv.pressed.connect(func(_c): _on_card_tapped(d, in_deck))
+	v.add_child(cv)
+	var bar := _copies_bar(d)
+	bar.custom_minimum_size.x = 150
+	v.add_child(bar)
+	if in_deck and _swap_card != null:
+		cv.selected = true   # glowing: pick one to replace
+	return v
+
+func _on_card_tapped(d: MonsterData, in_deck: bool) -> void:
+	if _swap_card != null:
+		if in_deck:
+			EconomyManager.swap_deck_card(_swap_card.id, d.id)
+			AudioManager.play(&"card_select")
+		_swap_card = null
+		_info.text = "Tap a card for details · build your 8-card battle deck"
+		_fill()
+		return
+	open_detail(d)
+
+## Starts deck editing: the next tapped deck card is replaced by `d`.
+func begin_swap(d: MonsterData) -> void:
+	_swap_card = d
+	_info.text = "Tap a card in your Battle Deck to replace it with %s" % d.display_name
+	_fill()
 
 func _copies_bar(d: MonsterData) -> Control:
 	var cost := EconomyManager.upgrade_cost(d.id)
@@ -126,6 +171,14 @@ func open_detail(d: MonsterData) -> UIPopup:
 	for r in rows:
 		grid.add_child(_stat_cell(r[0], r[1]))
 	var cost := EconomyManager.upgrade_cost(d.id)
+	if not EconomyManager.deck_ids().has(String(d.id)):
+		var use := UIStyle.button("Use in Battle Deck", UIStyle.BLUE, 26, Vector2(420, 76))
+		use.name = "UseInDeck"
+		use.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		use.pressed.connect(func():
+			_detail.close()
+			begin_swap(d))
+		_detail.content.add_child(use)
 	var up := UIStyle.button("MAX LEVEL" if cost.max else "Upgrade  ·  %d gold" % cost.gold, UIStyle.GREEN, 28, Vector2(420, 84))
 	up.name = "Upgrade"
 	up.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -213,7 +266,18 @@ func _process(delta: float) -> void:
 			_preview_model.play_select()
 
 func run_self_test() -> bool:
-	var ok := _grid.get_child_count() == 5
+	var ok := _deck_grid.get_child_count() == CardDatabase.DECK_SIZE and _grid.get_child_count() == CardDatabase.cards.size() - CardDatabase.DECK_SIZE
+	# deck editing: swap the first collection card into the deck
+	var outside: MonsterData = null
+	for d in CardDatabase.deck():
+		if not EconomyManager.deck_ids().has(String(d.id)):
+			outside = d
+			break
+	var replaced: StringName = StringName(EconomyManager.deck_ids()[0])
+	begin_swap(outside)
+	_on_card_tapped(CardDatabase.get_card(replaced), true)
+	ok = ok and EconomyManager.deck_ids().has(String(outside.id)) and not EconomyManager.deck_ids().has(String(replaced))
+	EconomyManager.swap_deck_card(replaced, outside.id)   # restore
 	for d in CardDatabase.deck():
 		var p := open_detail(d)
 		await get_tree().process_frame

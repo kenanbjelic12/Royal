@@ -16,10 +16,15 @@ var velocity := Vector3.ZERO
 var facing := 0.0
 var has_hit_once := false
 var deployed_at_msec := 0
+var quiet_spawn := false   # extra swarm members skip the deploy voice
 var _attack_target: Combatant
 var _ring: MeshInstance3D
 var _status_fx: CPUParticles3D
 var _frost: Node3D
+# charge (berserker)
+var charge_progress := 0.0
+var charging := false
+var _charge_fx: CPUParticles3D
 
 ## Must be called before adding to the tree.
 func setup(p_data: MonsterData, p_team: int, p_level: int, p_battle: Node) -> void:
@@ -46,8 +51,10 @@ func _ready() -> void:
 	model.rotation.y = facing
 	model.impact.connect(_on_impact)
 	model.walk_rate = data.move_speed / (2.6 if data.move_speed >= 2.5 else 1.4)
-	AudioManager.play_voice(String(data.id) + "_deploy")
+	if not quiet_spawn:
+		AudioManager.play_voice(String(data.id) + "_deploy")
 	model.death_finished.connect(queue_free)
+	model.play_spawn()
 	_build_ring()
 	# deploy: drop in from above with a squash
 	model.scale = Vector3.ONE * data.model_scale * ArenaLayout.UNIT_VISUAL_SCALE * 0.2
@@ -98,11 +105,15 @@ func _process(delta: float) -> void:
 	if target == null:
 		velocity = Vector3.ZERO
 		model.set_moving(false)
+		_set_charging(false)
+		charge_progress = 0.0
 		return
 	var in_range := ai.in_attack_range(target)
 	if in_range or model.is_attacking():
 		velocity = Vector3.ZERO
 		model.set_moving(false)
+		if not in_range:
+			charge_progress = 0.0
 		_face_towards(target.ground_pos(), delta)
 		if in_range and attack_cooldown <= 0.0 and not model.is_attacking():
 			_start_attack(target)
@@ -112,7 +123,13 @@ func _process(delta: float) -> void:
 		dir.y = 0
 		if dir.length() > 0.01:
 			dir = dir.normalized()
-		velocity = dir * data.move_speed * speed_factor()
+		var spd := data.move_speed * speed_factor()
+		if data.charge_distance > 0.0:
+			charge_progress += spd * delta
+			_set_charging(charge_progress >= data.charge_distance)
+			if charging:
+				spd *= data.charge_speed_multiplier
+		velocity = dir * spd
 		global_position += velocity * delta
 		model.set_moving(true)
 		_face_towards(global_position + dir, delta)
@@ -139,13 +156,25 @@ func _on_impact() -> void:
 		return
 	if not ai.in_attack_range(target, 0.8):
 		return
+	if data.target_type == MonsterData.TargetType.HEAL_ALLIES:
+		_heal_pulse()
+		return
 	var dmg := data.damage_at(level)
+	if charging:
+		dmg *= data.charge_damage_multiplier
+		_set_charging(false)
+		charge_progress = 0.0
+		VFX.shockwave(battle.effects_root(), ground_pos(), Color(1, 0.7, 0.3, 0.9), 1.6, 0.35)
+		battle.shake_camera(0.12, 0.2)
 	if not has_hit_once:
 		dmg *= data.first_hit_multiplier
 		has_hit_once = true
 	AudioManager.play(data.sfx_attack)
 	if randf() < 0.35:
 		AudioManager.play_voice(String(data.id) + "_attack", -2.0)
+	if data.projectile == MonsterData.ProjectileType.LIGHTNING:
+		battle.chain_lightning(self, model.get_muzzle_position(), target, dmg, data.chain_targets, data.chain_range, data.can_hit_air)
+		return
 	if data.projectile != MonsterData.ProjectileType.NONE:
 		battle.spawn_projectile({
 			"type": data.projectile, "from": model.get_muzzle_position(), "target": target,
@@ -175,6 +204,38 @@ func _on_impact() -> void:
 			battle.shake_camera(0.18, 0.25)
 		_:
 			VFX.burst(battle.effects_root(), hit_pos, data.accent_color, 12, 3.0, 0.18, 0.4)
+
+## Healer pulse: restores HP to every allied troop around the healer.
+func _heal_pulse() -> void:
+	var amount := data.heal_amount * (1.0 + MonsterData.LEVEL_SCALE * (level - 1))
+	var healed := 0
+	for u: MonsterController in battle.get_units(team):
+		if u == self or u.state == &"dead":
+			continue
+		if u.ground_pos().distance_to(ground_pos()) - u.radius <= data.heal_radius and u.hp < u.max_hp:
+			u.heal(amount)
+			healed += 1
+	VFX.heal_pulse(battle.effects_root(), ground_pos(), data.heal_radius, model.global_position.y)
+	if healed > 0:
+		AudioManager.play(data.sfx_attack)
+
+func heal(amount: float) -> void:
+	if hp <= 0.0:
+		return
+	hp = minf(max_hp, hp + amount)
+	VFX.heal_sparkle(battle.effects_root(), aim_point())
+
+func _set_charging(v: bool) -> void:
+	if v == charging:
+		return
+	charging = v
+	model.charging = v
+	if v:
+		AudioManager.play_voice(String(data.id) + "_charge")
+		if _charge_fx == null:
+			_charge_fx = VFX.charge_trail(self)
+	if _charge_fx:
+		_charge_fx.emitting = v
 
 func _on_damaged(_amount: float) -> void:
 	if model and hp > 0.0:

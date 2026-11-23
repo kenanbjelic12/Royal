@@ -13,7 +13,7 @@ var _battle_btn: Button
 var _t := 0.0
 
 func _ready() -> void:
-	add_child(KingdomBackdrop.new())
+	add_child(LivingBackground.new())
 	var layer := CanvasLayer.new()
 	add_child(layer)
 	ui = Control.new()

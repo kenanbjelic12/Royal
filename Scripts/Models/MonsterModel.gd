@@ -28,6 +28,10 @@ var moving := false
 var move_blend := 0.0
 var move_speed_factor := 1.0   # animation speed multiplier (slows show too)
 var walk_rate := 1.0           # gait speed so feet match the movement speed
+var charging := false          # sprinting charge (run animation)
+var celebrating := false       # winners cheer at the end of a battle
+var spawn_t := -1.0
+var spawn_len := 1.0
 
 var attack_t := -1.0
 var attack_len := 0.8
@@ -131,6 +135,10 @@ func play_death() -> void:
 func play_select() -> void:
 	select_t = 0.0
 
+## Entrance animation while the monster deploys (models with a clip for it).
+func play_spawn() -> void:
+	spawn_t = 0.0
+
 func is_dead_anim() -> bool:
 	return death_t >= 0.0
 
@@ -186,6 +194,12 @@ func _apply_pose(delta: float) -> void:
 		select_t += delta
 		if select_t >= select_len:
 			select_t = -1.0
+	if celebrating and select_t < 0.0 and death_t < 0.0:
+		select_t = 0.0
+	if spawn_t >= 0.0:
+		spawn_t += delta
+		if spawn_t >= spawn_len:
+			spawn_t = -1.0
 	hit_t += delta
 	for p in _rest:
 		if is_instance_valid(p):

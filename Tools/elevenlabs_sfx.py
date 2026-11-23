@@ -74,6 +74,44 @@ SOUNDS = {
     "button": ("short satisfying mobile game button click pop", 0.5),
     "coin": ("gold coins jingle reward, mobile game", 0.8),
     "chest_open": ("treasure chest lid opening with magical reward shimmer", 1.6),
+    # --- Thunder Mage
+    "thunder_mage_deploy_1": ("energetic young boy mage shouts 'Feel the thunder!' with electric crackle, " + CARTOON, 1.6),
+    "thunder_mage_deploy_2": ("young mage cheerful 'Zap time!' with static buzz, " + CARTOON, 1.2),
+    "thunder_mage_attack_1": ("young mage short shout 'ha!' casting lightning, " + CARTOON, 0.6),
+    "thunder_mage_death": ("young mage surprised 'whoa-oh!' with fizzling electricity, " + CARTOON, 1.1),
+    "thunder_mage_select": ("young mage excited laugh with crackling lightning sparks, " + CARTOON, 1.3),
+    # --- Healing Fairy
+    "healing_fairy_deploy_1": ("tiny sweet fairy girl sings 'I'll heal you!' with sparkling chimes, " + CARTOON, 1.5),
+    "healing_fairy_deploy_2": ("tiny fairy giggle with fluttering wings and twinkle, " + CARTOON, 1.0),
+    "healing_fairy_death": ("tiny fairy soft sad 'oh no...' fading with sparkles, " + CARTOON, 1.1),
+    "healing_fairy_select": ("tiny fairy happy giggle and magical twinkle, " + CARTOON, 1.2),
+    # --- Goblin Gang
+    "goblin_gang_deploy_1": ("group of three small goblins cackling 'hehehe!' mischievous, " + CARTOON, 1.3),
+    "goblin_gang_deploy_2": ("small goblins shout 'Get 'em!' squeaky voices, " + CARTOON, 1.0),
+    "goblin_gang_attack_1": ("small goblin squeaky grunt 'hyup!' spear poke, " + CARTOON, 0.5),
+    "goblin_gang_death": ("small goblin squeak 'eep!' and poof, " + CARTOON, 0.7),
+    "goblin_gang_select": ("small goblins giggling and stomping feet, " + CARTOON, 1.2),
+    # --- Viking Berserker
+    "viking_berserker_deploy_1": ("stocky viking warrior roars 'FOR VALHALLA!' deep and funny, " + CARTOON, 1.6),
+    "viking_berserker_deploy_2": ("viking big hearty laugh 'HAHAHA!' axe clang, " + CARTOON, 1.4),
+    "viking_berserker_attack_1": ("viking heavy grunt 'HRAAH!' with big axe chop, " + CARTOON, 0.7),
+    "viking_berserker_charge": ("viking battle yell 'CHAAARGE!' running with heavy footsteps, " + CARTOON, 1.3),
+    "viking_berserker_death": ("viking dramatic groan 'arrgh...' falling down heavily, " + CARTOON, 1.3),
+    "viking_berserker_select": ("viking stomps the ground and roars happily, " + CARTOON, 1.4),
+    # --- Bomb Pirate
+    "bomb_pirate_deploy_1": ("jolly pirate shouts 'Arrr, fire in the hole!' laughing, " + CARTOON, 1.6),
+    "bomb_pirate_deploy_2": ("chubby pirate hearty laugh 'yo ho ho!', " + CARTOON, 1.3),
+    "bomb_pirate_attack_1": ("pirate playful 'catch!' throwing a bomb with fuse hiss, " + CARTOON, 0.7),
+    "bomb_pirate_death": ("pirate 'blimey!' and comical fall, " + CARTOON, 1.0),
+    "bomb_pirate_select": ("pirate cheerful 'arrr!' and juggling bombs, " + CARTOON, 1.3),
+    # --- new mechanic sounds
+    "lightning_zap": ("magic lightning bolt zap, electric crackle, game sound", 0.6),
+    "lightning_hit": ("electric shock impact with crackling arcs, game sound", 0.6),
+    "heal_chime": ("gentle magical healing chime with soft sparkle, game sound", 0.8),
+    "spear_stab": ("quick wooden spear stab whoosh and thud, realistic", 0.5),
+    "axe_chop": ("heavy battle axe chop impact, metal and wood thud, realistic", 0.7),
+    "bomb_throw": ("cartoon bomb thrown with lit fuse hissing, whoosh", 0.7),
+    "bomb_explode": ("cartoon bomb explosion, punchy boom with debris, game sound", 1.0),
 }
 
 

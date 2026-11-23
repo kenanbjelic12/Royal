@@ -66,6 +66,33 @@ MONSTERS = {
                   "with a bubbling green poison orb held in right hand, potion bottle on the belt",
         "texture": "rich purple robe and hat, neon green trims and poison orb, mint hair, warm skin, brown wooden staff",
         "height": 1.3, "rig": True},
+    "thunder_mage": {
+        "prompt": "cute young thunder mage boy, spiky electric blue hair, big bright yellow eyes, confident smile, "
+                  "deep blue and gold wizard robe with lightning bolt patterns, short cape, small round hat with a "
+                  "lightning feather, crackling energy around his hands",
+        "texture": "deep royal blue robe with gold trims and yellow lightning bolt symbols, glowing electric blue hair, warm skin",
+        "height": 1.3, "rig": True},
+    "healing_fairy": {
+        "prompt": "sweet little healing fairy girl, pink and white flower petal dress, big friendly green eyes, rosy cheeks, "
+                  "short golden hair with a flower crown, four translucent butterfly wings on her back, "
+                  "holding a small wand with a glowing star, kind smile",
+        "texture": "soft pink and white petal dress, golden hair, pastel rainbow translucent wings, glowing pale yellow star",
+        "height": 1.1, "rig": True},
+    "goblin_gang": {
+        "prompt": "small cheeky goblin warrior, bright green skin, huge pointy ears, big mischievous orange eyes, toothy grin, "
+                  "leather armour with a rope belt, tiny iron helmet, bare feet, holding a short wooden spear, funny and cute",
+        "texture": "bright lime green skin, brown leather armour, rusty iron helmet, orange eyes",
+        "height": 0.9, "rig": True},
+    "viking_berserker": {
+        "prompt": "stocky chibi viking berserker, huge braided orange beard, horned iron helmet, big fierce but funny eyes, "
+                  "bare muscular arms with blue war paint, fur cape and leather kilt, holding a big double-bladed battle axe",
+        "texture": "orange braided beard, steel horned helmet, brown fur cape, blue war paint, polished steel axe",
+        "height": 1.35, "rig": True},
+    "bomb_pirate": {
+        "prompt": "cheerful chubby pirate bomber, red bandana and eye patch, big grin with a gold tooth, striped red and "
+                  "white shirt, blue pants, peg leg, belt full of round black bombs, holding a lit cartoon bomb",
+        "texture": "red bandana, red and white striped shirt, navy pants, black bombs with orange fuses, gold tooth",
+        "height": 1.25, "rig": True},
 }
 
 

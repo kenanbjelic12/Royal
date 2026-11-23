@@ -10,7 +10,9 @@ signal deploy_failed(reason: String)
 
 var battle: BattleManager
 var team := 0
-var hand: Array[MonsterData] = []
+var hand: Array[MonsterData] = []   # the playable slots (mirrors cycle.slots)
+var cycle: Hand
+signal hand_changed(index: int)
 var selected := -1
 var _ghost: Node3D
 var _ghost_model: MonsterModel
@@ -23,7 +25,8 @@ var _hover_valid := false
 func setup(p_battle: BattleManager, p_team: int) -> void:
 	battle = p_battle
 	team = p_team
-	hand = CardDatabase.deck()
+	cycle = Hand.new(CardDatabase.battle_deck())
+	hand = cycle.slots
 
 func can_play(i: int) -> bool:
 	return i >= 0 and i < hand.size() and battle.elixir[team].can_afford(hand[i].elixir_cost) and not battle.is_finished()
@@ -90,7 +93,9 @@ func try_deploy_world(world: Vector3) -> bool:
 	if battle.deploy_card(team, data, p):
 		var idx := selected
 		deselect()
+		cycle.play(idx)
 		deployed.emit(idx, data)
+		hand_changed.emit(idx)
 		return true
 	AudioManager.play(&"error")
 	deploy_failed.emit("Can't deploy there!")
